@@ -1,9 +1,10 @@
 """Pydantic schemas for loan quote API request and response data."""
 
 import calendar
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
@@ -100,3 +101,68 @@ class LoanQuoteResponse(LoanSchema):
             final_due_date=quote.final_due_date,
             schedule=[ScheduleItemResponse.from_domain(item) for item in quote.schedule],
         )
+
+
+class BorrowerSummarySchema(LoanSchema):
+    """Minimal borrower summary for owner loan views."""
+
+    id: UUID
+    first_name: str
+    last_name: str
+    phone_number_normalized: str
+
+
+class OwnerLoanResponse(LoanSchema):
+    """Owner view of a loan contract."""
+
+    id: UUID
+    loan_request_id: UUID | None
+    borrower_id: UUID
+    borrower: BorrowerSummarySchema | None = None
+    original_principal: Decimal
+    outstanding_principal: Decimal
+    monthly_rate: Decimal
+    term_months: int
+    payment_frequency: str
+    number_of_payments: int
+    first_due_date: date
+    final_due_date: date
+    status: str
+    disbursed_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    paid_at: datetime | None = None
+    defaulted_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class OwnerLoanDetailResponse(OwnerLoanResponse):
+    """Owner detail view of a loan contract with schedule preview."""
+
+    quote_preview: LoanQuoteResponse | None = None
+
+
+class BorrowerLoanResponse(LoanSchema):
+    """Borrower view of a loan contract (omitting owner metadata)."""
+
+    id: UUID
+    loan_request_id: UUID | None
+    original_principal: Decimal
+    outstanding_principal: Decimal
+    monthly_rate: Decimal
+    term_months: int
+    payment_frequency: str
+    number_of_payments: int
+    first_due_date: date
+    final_due_date: date
+    status: str
+    disbursed_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    paid_at: datetime | None = None
+    created_at: datetime
+
+
+class BorrowerLoanDetailResponse(BorrowerLoanResponse):
+    """Borrower detail view of a loan contract with schedule preview."""
+
+    quote_preview: LoanQuoteResponse | None = None
