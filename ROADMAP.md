@@ -153,7 +153,7 @@ never force-pushed or merged without explicit review approval.
 
 ### M08 — Borrower Flutter Application Foundation
 
-- **Status:** Not Started
+- **Status:** In Progress
 - **Branch:** `feature/m08-borrower-flutter-foundation`
 - **Goal:** Establish the isolated Borrower mobile client and activation/login experience.
 - **Topics to Learn:** Separate Flutter applications; Borrower session state; activation UI; login UI; API integration; device identity.
