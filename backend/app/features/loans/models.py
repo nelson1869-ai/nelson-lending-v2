@@ -1,6 +1,6 @@
 """Loan persistence models for core financial contract terms."""
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Final
 from uuid import UUID, uuid4
@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import (
     CheckConstraint,
     Date,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -22,8 +23,16 @@ from app.db.types import MONEY_SQL_TYPE, RATE_SQL_TYPE
 
 if TYPE_CHECKING:
     from app.features.borrowers.models import Borrower
+    from app.features.loan_requests.models import LoanRequest
 
 PAYMENT_FREQUENCIES: Final = ("monthly", "twice_monthly")
+LOAN_STATUSES: Final = (
+    "pending_disbursement",
+    "active",
+    "paid",
+    "cancelled",
+    "defaulted",
+)
 
 
 class Loan(TimestampMixin, Base):
@@ -59,8 +68,14 @@ class Loan(TimestampMixin, Base):
             "final_due_date >= first_due_date",
             name="final_due_date_after_first",
         ),
+        CheckConstraint(
+            "status IN ('pending_disbursement', 'active', 'paid', 'cancelled', 'defaulted')",
+            name="loan_status_valid",
+        ),
         Index("ix_loans_borrower_id", "borrower_id"),
+        Index("ix_loans_status", "status"),
         Index("ix_loans_final_due_date", "final_due_date"),
+        Index("ix_loans_loan_request_id", "loan_request_id", unique=True),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -68,6 +83,12 @@ class Loan(TimestampMixin, Base):
         primary_key=True,
         default=uuid4,
     )
+    loan_request_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("loan_requests.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+
     borrower_id: Mapped[UUID] = mapped_column(
         PostgreSQLUUID(as_uuid=True),
         ForeignKey("borrowers.id", ondelete="RESTRICT"),
@@ -105,5 +126,31 @@ class Loan(TimestampMixin, Base):
         Date,
         nullable=False,
     )
+    status: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="pending_disbursement",
+    )
+    disbursed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    cancelled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    paid_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    defaulted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
 
     borrower: Mapped["Borrower"] = relationship("Borrower", lazy="raise")
+    loan_request: Mapped["LoanRequest | None"] = relationship(
+        "LoanRequest",
+        back_populates="loan",
+        lazy="raise",
+    )
