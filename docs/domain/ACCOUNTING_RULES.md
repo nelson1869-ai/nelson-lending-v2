@@ -49,9 +49,25 @@ DR 1000 Cash                [Total Payment Amount]
 ```
 
 ### 4.3 Compensating Reversal (`reversal`)
-Triggered by Owner reversal action against a previous transaction:
+Triggered by Owner reversal action against an eligible accounting-only transaction:
 
 ```text
 Swap Debits and Credits of all entries in the original transaction
 Set reversal_of_id = [Original Journal Transaction ID]
 ```
+
+## 5. Business-Event Journal Integrity & Reversal Protection
+
+Automatic business-event journals generated from:
+- `loan_disbursement`
+- `payment`
+
+are immutable accounting representations of authoritative business domain mutations.
+
+1. **Independent Reversal Prohibition:**
+   Automatic business-event journals (`loan_disbursement`, `payment`) **MUST NOT** be independently reversed through generic accounting reversal endpoints (`POST /owner/accounting/journals/{id}/reverse`). Attempting to do so returns `HTTP 409 Conflict` and `BusinessEventJournalReversalError`.
+2. **Domain-Atomic Reversals:**
+   Reversing a financial business event requires an authoritative business-domain workflow that atomically updates BOTH the underlying domain state (e.g., Loan, Payment) and the accounting ledger within a single database transaction. Generic accounting reversals cannot alter loan balances or payment history.
+3. **Reversal Invariance:**
+   Reversal transactions (`reversal`) cannot themselves be reversed (`CannotReverseReversalError`). A journal cannot be reversed more than once (`JournalAlreadyReversedError`).
+
