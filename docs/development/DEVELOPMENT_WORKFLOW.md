@@ -28,10 +28,10 @@ main
 → merge --no-ff into main
 ```
 
-Milestone branches remain local after merging so their commits and decisions can be revisited.
+Milestone branches remain available after merging so their commits and decisions can be revisited.
 Do not automatically merge an implementation task. The project owner reviews it first and
-explicitly requests the merge. No remote is configured and no push occurs unless explicitly
-requested in a future milestone.
+explicitly requests the merge. The GitHub remote mirrors reviewed learning-history branches;
+push only the branch explicitly authorized for the current task, without force or history rewrites.
 
 ## 3. Core Git Commands
 
@@ -146,14 +146,13 @@ For each coherent milestone:
 When explicit step-by-step mode is requested, complete one step and wait for confirmation instead
 of continuing through the whole milestone.
 
-## 5. Future Quality Gates
+## 5. Quality Gates
 
-The commands become active when their toolchains are introduced. M01 does not scaffold or run
-application tooling.
+Each command becomes active when its milestone introduces the relevant toolchain.
 
 ### Backend
 
-From `backend/`, future gates include:
+From `backend/`, M02 introduces:
 
 ```bash
 python -m pytest
@@ -164,6 +163,15 @@ python -m alembic heads
 python -m alembic current
 python -m alembic check
 ```
+
+The first six gates are collected in `./verify.sh`. `alembic current` and `alembic check` require
+a configured PostgreSQL connection and become database-backed gates in M03. M02 has no migration
+revision, so a successful `alembic heads` command intentionally prints no head.
+
+M02 distinguishes `/health/live`, which only proves the API process can answer, from
+`/health/ready`, which executes `SELECT 1` and safely returns HTTP 503 when PostgreSQL is
+unavailable. Mocked readiness tests are unit tests; they are not labeled database integration
+tests.
 
 Database milestones additionally test migration from zero, downgrade/re-upgrade, constraints, and
 model behavior against a dedicated local PostgreSQL test database.
