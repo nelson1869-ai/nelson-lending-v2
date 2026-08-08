@@ -121,12 +121,14 @@ class OwnerLoanResponse(LoanSchema):
     borrower: BorrowerSummarySchema | None = None
     original_principal: Decimal
     outstanding_principal: Decimal
+    accrued_interest: Decimal = Decimal("0.00")
     monthly_rate: Decimal
     term_months: int
     payment_frequency: str
     number_of_payments: int
     first_due_date: date
     final_due_date: date
+    next_interest_due_date: date | None = None
     status: str
     disbursed_at: datetime | None = None
     cancelled_at: datetime | None = None
@@ -149,12 +151,14 @@ class BorrowerLoanResponse(LoanSchema):
     loan_request_id: UUID | None
     original_principal: Decimal
     outstanding_principal: Decimal
+    accrued_interest: Decimal = Decimal("0.00")
     monthly_rate: Decimal
     term_months: int
     payment_frequency: str
     number_of_payments: int
     first_due_date: date
     final_due_date: date
+    next_interest_due_date: date | None = None
     status: str
     disbursed_at: datetime | None = None
     cancelled_at: datetime | None = None

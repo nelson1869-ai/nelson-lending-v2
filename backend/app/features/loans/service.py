@@ -81,6 +81,7 @@ async def create_loan_from_request(
         number_of_payments=quote.number_of_payments,
         first_due_date=loan_request.requested_first_due_date,
         final_due_date=quote.final_due_date,
+        next_interest_due_date=loan_request.requested_first_due_date,
         status="pending_disbursement",
     )
 
@@ -120,6 +121,8 @@ async def disburse_loan(
     loan.status = "active"
     loan.disbursed_at = datetime.now(UTC)
     loan.accrued_interest = Decimal("0.00")
+    if loan.next_interest_due_date is None:
+        loan.next_interest_due_date = loan.first_due_date
     await db.flush()
 
     stmt_updated = select(Loan).options(joinedload(Loan.borrower)).where(Loan.id == loan.id)

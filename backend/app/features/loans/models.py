@@ -131,6 +131,10 @@ class Loan(TimestampMixin, Base):
         Date,
         nullable=False,
     )
+    next_interest_due_date: Mapped[date] = mapped_column(
+        Date,
+        nullable=False,
+    )
     status: Mapped[str] = mapped_column(
         String(30),
         nullable=False,

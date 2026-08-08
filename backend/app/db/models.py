@@ -28,4 +28,3 @@ MODEL_REGISTRY = (
     LoanRequest,
     Payment,
 )
-

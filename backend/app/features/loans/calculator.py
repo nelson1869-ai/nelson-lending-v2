@@ -163,6 +163,47 @@ def build_due_dates(
     return due_dates
 
 
+def advance_due_date(
+    current_due_date: date,
+    payment_frequency: str,
+    first_due_date: date,
+) -> date:
+    """Calculate the next contractual due date following current_due_date.
+
+    Monthly:
+      Calendar-anchored to first_due_date.day (e.g. Jan 31 -> Feb 28/29 -> Mar 31).
+
+    Twice a Month:
+      15th and last calendar day of each month.
+    """
+    if payment_frequency == "monthly":
+        anchor_day = first_due_date.day
+        year = current_due_date.year
+        month = current_due_date.month + 1
+        if month > 12:
+            month = 1
+            year += 1
+        max_days = calendar.monthrange(year, month)[1]
+        due_day = min(anchor_day, max_days)
+        return date(year, month, due_day)
+
+    elif payment_frequency == "twice_monthly":
+        year = current_due_date.year
+        month = current_due_date.month
+        last_day = calendar.monthrange(year, month)[1]
+
+        if current_due_date.day == 15:
+            return date(year, month, last_day)
+        else:
+            month += 1
+            if month > 12:
+                month = 1
+                year += 1
+            return date(year, month, 15)
+    else:
+        raise ValueError(f"Unsupported payment frequency '{payment_frequency}'")
+
+
 def calculate_period_rate(monthly_rate: Decimal, payment_frequency: str) -> Decimal:
     """Derive periodic interest rate from canonical monthly rate."""
     if monthly_rate < Decimal("0"):
