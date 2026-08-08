@@ -198,15 +198,15 @@ never force-pushed or merged without explicit review approval.
 
 ### M10 — Borrower Loan Requests
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m10-borrower-loan-requests`
 - **Goal:** Let authenticated borrowers request loans and let the Owner review them safely.
 - **Topics to Learn:** Request workflows; duplicate-pending protection; quote previews; Owner review; API authorization; cross-borrower isolation.
 - **Deliverables:** Request persistence and endpoints; stateless quote preview; Owner approval/rejection flow; authorization policies.
 - **Tests / Quality Gates:** Duplicate/race cases; borrower-context enforcement; Owner-only review; quote consistency; cross-borrower denial.
-- **Completion Commit:** Pending
-- **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Completion Commit:** `docs: mark m10 ready for review`
+- **Merge Commit:** Pending (Awaiting review)
+- **Notes / Lessons Learned:** Implemented borrower loan request persistence (`loan_requests` table with partial unique index `ix_loan_requests_one_pending_per_borrower` enforcing max 1 pending request per borrower) and review API. Added borrower quote estimate preview endpoint, request submission, request list/detail endpoints, and cancellation for pending requests. Implemented owner list, detail (with calculated quote preview), and approval/rejection endpoints protected with row locking (`SELECT ... FOR UPDATE`). Owner approval sets request status to `approved` ONLY and does NOT create a `Loan` instance (deferred to M11). Delivered Borrower Flutter loan request workflow and Owner Flutter review workflow with full widget, unit, integration, and build quality gates passed.
 
 ### M11 — Loan Lifecycle
 
