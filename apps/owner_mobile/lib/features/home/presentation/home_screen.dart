@@ -7,6 +7,7 @@ import '../../auth/data/owner_auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../loan_requests/presentation/owner_loan_requests_list_screen.dart';
 import '../../loans/presentation/owner_loans_list_screen.dart';
+import '../../notifications/presentation/owner_outbox_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -192,6 +193,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       icon: const Icon(Icons.account_balance),
                       label: const Text('Double-Entry Accounting & Ledger'),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const OwnerOutboxScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      icon: const Icon(Icons.notifications_active),
+                      label: const Text('Notification Outbox'),
                     ),
                   ],
                 ),

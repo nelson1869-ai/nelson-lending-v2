@@ -20,7 +20,8 @@ class OwnerLoansApiClient {
     if (status != null && status.isNotEmpty) {
       queryParams['status'] = status;
     }
-    final res = await _dio.get('/owner/loans', queryParameters: queryParams);
+    final res =
+        await _dio.get('/api/v1/owner/loans', queryParameters: queryParams);
     final list = res.data as List<dynamic>;
     return list
         .map((e) => OwnerLoanModel.fromJson(e as Map<String, dynamic>))
@@ -28,22 +29,23 @@ class OwnerLoansApiClient {
   }
 
   Future<OwnerLoanDetailModel> fetchLoanDetail(String id) async {
-    final res = await _dio.get('/owner/loans/$id');
+    final res = await _dio.get('/api/v1/owner/loans/$id');
     return OwnerLoanDetailModel.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<OwnerLoanModel> createLoanFromRequest(String requestId) async {
-    final res = await _dio.post('/owner/loan-requests/$requestId/create-loan');
+    final res =
+        await _dio.post('/api/v1/owner/loan-requests/$requestId/create-loan');
     return OwnerLoanModel.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<OwnerLoanModel> disburseLoan(String loanId) async {
-    final res = await _dio.post('/owner/loans/$loanId/disburse');
+    final res = await _dio.post('/api/v1/owner/loans/$loanId/disburse');
     return OwnerLoanModel.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<OwnerLoanModel> cancelLoan(String loanId) async {
-    final res = await _dio.post('/owner/loans/$loanId/cancel');
+    final res = await _dio.post('/api/v1/owner/loans/$loanId/cancel');
     return OwnerLoanModel.fromJson(res.data as Map<String, dynamic>);
   }
 
@@ -64,7 +66,7 @@ class OwnerLoansApiClient {
       if (note != null && note.isNotEmpty) 'note': note,
     };
     final res = await _dio.post(
-      '/owner/loans/$loanId/payments',
+      '/api/v1/owner/loans/$loanId/payments',
       data: body,
       options: Options(headers: {'Idempotency-Key': key}),
     );
@@ -72,7 +74,7 @@ class OwnerLoansApiClient {
   }
 
   Future<List<OwnerPaymentModel>> fetchLoanPayments(String loanId) async {
-    final res = await _dio.get('/owner/loans/$loanId/payments');
+    final res = await _dio.get('/api/v1/owner/loans/$loanId/payments');
     final list = res.data as List<dynamic>;
     return list
         .map((e) => OwnerPaymentModel.fromJson(e as Map<String, dynamic>))

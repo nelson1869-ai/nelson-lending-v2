@@ -18,7 +18,7 @@ class OwnerLoanRequestsApiClient {
   Future<List<OwnerLoanRequestDetailModel>> listRequests(
       {String? statusFilter}) async {
     final response = await _dio.get(
-      '/owner/loan-requests',
+      '/api/v1/owner/loan-requests',
       queryParameters: statusFilter != null && statusFilter.isNotEmpty
           ? {'status_filter': statusFilter}
           : null,
@@ -31,14 +31,14 @@ class OwnerLoanRequestsApiClient {
   }
 
   Future<OwnerLoanRequestDetailModel> getRequestDetail(String requestId) async {
-    final response = await _dio.get('/owner/loan-requests/$requestId');
+    final response = await _dio.get('/api/v1/owner/loan-requests/$requestId');
     return OwnerLoanRequestDetailModel.fromJson(
         response.data as Map<String, dynamic>);
   }
 
   Future<void> approveRequest(String requestId, {String? ownerNote}) async {
     await _dio.post(
-      '/owner/loan-requests/$requestId/approve',
+      '/api/v1/owner/loan-requests/$requestId/approve',
       data: ownerNote != null && ownerNote.isNotEmpty
           ? {'ownerNote': ownerNote}
           : {},
@@ -47,7 +47,7 @@ class OwnerLoanRequestsApiClient {
 
   Future<void> rejectRequest(String requestId, {String? ownerNote}) async {
     await _dio.post(
-      '/owner/loan-requests/$requestId/reject',
+      '/api/v1/owner/loan-requests/$requestId/reject',
       data: ownerNote != null && ownerNote.isNotEmpty
           ? {'ownerNote': ownerNote}
           : {},
