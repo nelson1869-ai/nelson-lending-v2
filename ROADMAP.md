@@ -133,12 +133,12 @@ never force-pushed or merged without explicit review approval.
 
 ### M07 — Owner Flutter Application Foundation
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m07-owner-flutter-foundation`
 - **Goal:** Establish the separate Owner mobile client and connect it securely to the backend.
 - **Topics to Learn:** Flutter architecture; Riverpod; Dio; GoRouter; secure storage; API integration; Owner session handling.
 - **Deliverables:** Owner app scaffold at `apps/owner_mobile`; environment/API client; navigation; session state; login and protected-shell UI.
-- **Tests / Quality Gates:** `flutter analyze` passed; 22 unit/widget/router/auth tests passed in `flutter test`; `dart format` passed; backend regression quality gates passed.
+- **Tests / Quality Gates:** `flutter analyze` passed; 23 unit/widget/router/auth tests passed in `flutter test`; `dart format` passed; backend regression quality gates passed.
 - **Educational Commits:**
   - `chore(owner): scaffold flutter application`
   - `feat(owner): add app architecture and navigation`
@@ -147,8 +147,8 @@ never force-pushed or merged without explicit review approval.
   - `test(owner): cover owner app foundation`
   - `fix(owner): propagate expired sessions to auth state`
   - `chore(dev): add reliable local application launcher`
-- **Completion Commit:** Pending review and merge
-- **Merge Commit:** Pending
+- **Completion Commit:** `44e7007376b02e30c982491e4b7bddc5b15a7f39`
+- **Merge Commit:** `1ed1b6b8e8be380474bf3356ac9f8c0cbe899c6b`
 - **Notes / Lessons Learned:** The Owner mobile application uses a clean feature-oriented architecture with Flutter Riverpod for state management, GoRouter for declarative protected routing, Dio for HTTP communication, and FlutterSecureStorage for sensitive session persistence. Short-lived access JWTs are held in memory, while high-entropy refresh tokens are securely stored and rotated atomically on refresh. Single-flight refresh prevents concurrency race conditions. The app strictly enforces the single-Owner business model without staff roles or RBAC matrices and isolates Owner authentication from Borrower identity.
 
 ### M08 — Borrower Flutter Application Foundation
