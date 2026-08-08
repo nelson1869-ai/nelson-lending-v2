@@ -5,14 +5,15 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGBUILD_UUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGBUILD_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 
 class NotificationOutbox(Base):
-    """Transactional Outbox entry capturing notification intents durably inside business transactions."""
+    """Durable notification intent captured inside a business transaction."""
 
     __tablename__ = "notification_outbox"
 
@@ -50,7 +51,7 @@ class NotificationOutbox(Base):
             name="ck_outbox_status",
         ),
         CheckConstraint(
-            "channel IN ('in_app', 'sms', 'email', 'push')",
+            "channel IN ('in_app')",
             name="ck_outbox_channel",
         ),
         CheckConstraint(

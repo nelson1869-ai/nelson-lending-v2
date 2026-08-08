@@ -1,6 +1,7 @@
 """Domain service for notification enqueuing, rendering, and database queries."""
 
 from datetime import UTC, datetime
+from hashlib import sha256
 from typing import Any
 from uuid import UUID
 
@@ -54,7 +55,7 @@ def render_notification(template_key: str, payload: dict[str, Any]) -> tuple[str
     if template_key == TEMPLATE_BORROWER_REGISTRATION_APPROVED:
         return (
             "Registration Approved",
-            "Your borrower account registration has been approved. You can now log in.",
+            "Your borrower registration was approved. Activate your account before logging in.",
         )
     if template_key == TEMPLATE_LOAN_REQUEST_SUBMITTED:
         principal = payload.get("requested_principal", "0.00")
@@ -114,7 +115,8 @@ async def enqueue_notification(
     if recipient_type not in ALL_RECIPIENT_TYPES:
         raise InvalidRecipientTypeError(f"Invalid recipient type: '{recipient_type}'")
 
-    idempotency_key = f"{event_type}:{aggregate_id}:{recipient_id}:{template_key}:{channel}"
+    identity = f"{event_type}:{aggregate_id}:{recipient_id}:{template_key}:{channel}"
+    idempotency_key = f"notification:{sha256(identity.encode()).hexdigest()}"
 
     # Deduplication check: return existing outbox entry if already enqueued
     stmt = select(NotificationOutbox).where(NotificationOutbox.idempotency_key == idempotency_key)

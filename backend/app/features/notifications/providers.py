@@ -14,7 +14,7 @@ class NotificationProvider(Protocol):
     """Protocol defining external or internal notification delivery channels."""
 
     async def deliver(self, db: AsyncSession, outbox: NotificationOutbox) -> bool:
-        """Deliver a notification outbox record. Returns True on success, raises or returns False on failure."""
+        """Deliver an outbox record, returning whether delivery succeeded."""
         ...
 
 
@@ -26,7 +26,7 @@ class InAppNotificationProvider:
         if outbox.channel != CHANNEL_IN_APP:
             return False
 
-        # Deduplication check: if notification for this outbox entry already exists, consider delivered
+        # An uncertain retry is harmless because delivery source is unique.
         stmt = select(Notification).where(Notification.source_outbox_id == outbox.id)
         res = await db.execute(stmt)
         existing = res.scalar_one_or_none()

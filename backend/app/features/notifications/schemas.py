@@ -46,7 +46,6 @@ class OutboxItemResponse(BaseModel):
     last_attempt_at: datetime | None
     delivered_at: datetime | None
     last_error: str | None
-    idempotency_key: str
     created_at: datetime
     updated_at: datetime
 

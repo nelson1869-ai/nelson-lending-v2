@@ -15,15 +15,8 @@ ALL_OUTBOX_STATUSES = {
 
 # Channels
 CHANNEL_IN_APP = "in_app"
-CHANNEL_SMS = "sms"
-CHANNEL_EMAIL = "email"
-CHANNEL_PUSH = "push"
-
 ALL_CHANNELS = {
     CHANNEL_IN_APP,
-    CHANNEL_SMS,
-    CHANNEL_EMAIL,
-    CHANNEL_PUSH,
 }
 
 # Recipient Types

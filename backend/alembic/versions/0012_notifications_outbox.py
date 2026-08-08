@@ -58,7 +58,7 @@ def upgrade() -> None:
             name="ck_outbox_status",
         ),
         sa.CheckConstraint(
-            "channel IN ('in_app', 'sms', 'email', 'push')",
+            "channel IN ('in_app')",
             name="ck_outbox_channel",
         ),
         sa.CheckConstraint(

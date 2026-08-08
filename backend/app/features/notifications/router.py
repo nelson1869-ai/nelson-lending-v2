@@ -1,13 +1,14 @@
 """FastAPI routers for Borrower notifications and Owner outbox operations."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import DatabaseSession
-from app.features.borrowers.auth_dependencies import CurrentBorrowerAccount
-from app.features.borrowers.models import BorrowerAccount
+from app.db.session import get_db
+from app.features.borrowers.auth_dependencies import get_current_borrower_account
+from app.features.borrowers.auth_service import BorrowerAuthContext
 from app.features.notifications.schemas import (
     BorrowerNotificationResponse,
     OutboxItemResponse,
@@ -29,8 +30,9 @@ from app.features.owner_identity.models import OwnerUser
 borrower_router = APIRouter(prefix="/borrower/notifications", tags=["Borrower Notifications"])
 owner_router = APIRouter(prefix="/owner/notifications", tags=["Owner Outbox Operations"])
 
-CurrentBorrower = Annotated[BorrowerAccount, Depends(CurrentBorrowerAccount)]
+CurrentBorrower = Annotated[BorrowerAuthContext, Depends(get_current_borrower_account)]
 CurrentOwner = Annotated[OwnerUser, Depends(get_current_owner)]
+DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 @borrower_router.get(
@@ -40,13 +42,11 @@ CurrentOwner = Annotated[OwnerUser, Depends(get_current_owner)]
 )
 async def borrower_list_notifications(
     session: DatabaseSession,
-    borrower_acc: CurrentBorrower,
+    auth: CurrentBorrower,
     limit: int = Query(default=50, ge=1, le=100),
 ) -> list[BorrowerNotificationResponse]:
     """Retrieve delivered in-app notifications for the authenticated Borrower."""
-    notifications = await list_borrower_notifications(
-        session, borrower_acc.borrower_id, limit=limit
-    )
+    notifications = await list_borrower_notifications(session, auth.borrower.id, limit=limit)
     return [BorrowerNotificationResponse.model_validate(n) for n in notifications]
 
 
@@ -57,10 +57,10 @@ async def borrower_list_notifications(
 )
 async def borrower_unread_count(
     session: DatabaseSession,
-    borrower_acc: CurrentBorrower,
+    auth: CurrentBorrower,
 ) -> UnreadCountResponse:
     """Get the unread notification count for the authenticated Borrower."""
-    count = await get_borrower_unread_count(session, borrower_acc.borrower_id)
+    count = await get_borrower_unread_count(session, auth.borrower.id)
     return UnreadCountResponse(unread_count=count)
 
 
@@ -72,13 +72,11 @@ async def borrower_unread_count(
 async def borrower_mark_read(
     notification_id: UUID,
     session: DatabaseSession,
-    borrower_acc: CurrentBorrower,
+    auth: CurrentBorrower,
 ) -> BorrowerNotificationResponse:
     """Mark a delivered notification as read for the authenticated Borrower."""
     try:
-        notification = await mark_notification_read(
-            session, notification_id, borrower_acc.borrower_id
-        )
+        notification = await mark_notification_read(session, notification_id, auth.borrower.id)
         await session.commit()
         return BorrowerNotificationResponse.model_validate(notification)
     except NotificationNotFoundError as err:
@@ -96,7 +94,9 @@ async def borrower_mark_read(
 async def owner_list_outbox(
     session: DatabaseSession,
     _: CurrentOwner,
-    status_filter: str | None = Query(default=None, alias="status"),
+    status_filter: Literal["pending", "failed", "delivered", "dead_letter"] | None = Query(
+        default=None, alias="status"
+    ),
     limit: int = Query(default=50, ge=1, le=100),
 ) -> OutboxListResponse:
     """Retrieve operational outbox entries for Owner monitoring."""
