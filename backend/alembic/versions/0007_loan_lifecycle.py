@@ -20,7 +20,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.add_column(
         "loans",
-        sa.Column("loan_request_id", sa.UUID(), nullable=True),
+        sa.Column("loan_request_id", sa.UUID(), nullable=False),
     )
     op.add_column(
         "loans",
@@ -77,12 +77,6 @@ def downgrade() -> None:
     op.drop_constraint("loan_status_valid", "loans", type_="check", if_exists=True)
     op.drop_index("ix_loans_status", table_name="loans", if_exists=True)
     op.drop_index("ix_loans_loan_request_id", table_name="loans", if_exists=True)
-    op.drop_constraint(
-        "uq_loans_loan_request_id",
-        "loans",
-        type_="unique",
-        if_exists=True,
-    )
     op.drop_constraint(
         "fk_loans_loan_request_id_loan_requests",
         "loans",

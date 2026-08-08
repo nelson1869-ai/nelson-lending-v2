@@ -83,10 +83,10 @@ class Loan(TimestampMixin, Base):
         primary_key=True,
         default=uuid4,
     )
-    loan_request_id: Mapped[UUID | None] = mapped_column(
+    loan_request_id: Mapped[UUID] = mapped_column(
         PostgreSQLUUID(as_uuid=True),
         ForeignKey("loan_requests.id", ondelete="RESTRICT"),
-        nullable=True,
+        nullable=False,
     )
 
     borrower_id: Mapped[UUID] = mapped_column(
@@ -149,7 +149,7 @@ class Loan(TimestampMixin, Base):
     )
 
     borrower: Mapped["Borrower"] = relationship("Borrower", lazy="raise")
-    loan_request: Mapped["LoanRequest | None"] = relationship(
+    loan_request: Mapped["LoanRequest"] = relationship(
         "LoanRequest",
         back_populates="loan",
         lazy="raise",

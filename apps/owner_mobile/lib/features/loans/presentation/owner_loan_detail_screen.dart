@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'owner_loans_controller.dart';
 
-
 class OwnerLoanDetailScreen extends ConsumerWidget {
   final String loanId;
 
