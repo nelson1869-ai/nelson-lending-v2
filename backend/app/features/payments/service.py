@@ -34,9 +34,7 @@ async def post_payment(
     6. Update Loan.outstanding_principal.
     7. If loan obligations are fully satisfied, transition Loan status to paid.
     """
-    result = await session.execute(
-        select(Loan).where(Loan.id == loan_id).with_for_update()
-    )
+    result = await session.execute(select(Loan).where(Loan.id == loan_id).with_for_update())
     loan = result.scalar_one_or_none()
 
     if loan is None:
@@ -77,14 +75,19 @@ async def post_payment(
         remaining_principal=allocation.remaining_principal,
         payment_date=payload.payment_date,
         posted_at=now,
+        created_at=now,
+        updated_at=now,
         reference=payload.reference,
         note=payload.note,
     )
+
     session.add(payment)
 
     loan.outstanding_principal = allocation.remaining_principal
 
-    if allocation.remaining_principal == Decimal("0.00") and allocation.remaining_interest == Decimal("0.00"):
+    if allocation.remaining_principal == Decimal(
+        "0.00"
+    ) and allocation.remaining_interest == Decimal("0.00"):
         loan.status = "paid"
         loan.paid_at = now
 
