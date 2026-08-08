@@ -27,6 +27,7 @@ EXPECTED_TABLES = {
     "borrower_refresh_tokens",
     "borrowers",
     "business_settings",
+    "owner_refresh_tokens",
     "owner_users",
 }
 
@@ -76,13 +77,13 @@ async def test_expected_schema_and_migration_exist(integration_engine: AsyncEngi
         revision = await connection.scalar(text("SELECT version_num FROM alembic_version"))
 
     assert set(tables.scalars()) == EXPECTED_TABLES
-    assert revision == "0001_initial_identity_schema"
+    assert revision == "0002_owner_auth_sessions"
 
 
 async def test_single_active_owner_invariant(db_session: AsyncSession) -> None:
-    db_session.add(OwnerUser(username="owner-a", is_active=True))
+    db_session.add(OwnerUser(username="owner-a", password_hash="hash-a", is_active=True))
     await db_session.flush()
-    db_session.add(OwnerUser(username="owner-b", is_active=True))
+    db_session.add(OwnerUser(username="owner-b", password_hash="hash-b", is_active=True))
 
     with pytest.raises(IntegrityError):
         await db_session.flush()
@@ -91,8 +92,8 @@ async def test_single_active_owner_invariant(db_session: AsyncSession) -> None:
 async def test_owner_username_is_unique(db_session: AsyncSession) -> None:
     db_session.add_all(
         [
-            OwnerUser(username="same-owner", is_active=False),
-            OwnerUser(username="same-owner", is_active=False),
+            OwnerUser(username="same-owner", password_hash="hash-a", is_active=False),
+            OwnerUser(username="same-owner", password_hash="hash-b", is_active=False),
         ]
     )
 
