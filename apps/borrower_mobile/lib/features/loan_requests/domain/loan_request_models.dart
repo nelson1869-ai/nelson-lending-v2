@@ -83,9 +83,6 @@ class LoanRequestModel {
   final String requestedFirstDueDate;
   final String status;
   final String submittedAt;
-  final String? reviewedAt;
-  final String? reviewedByOwnerId;
-  final String? ownerNote;
   final String createdAt;
   final String updatedAt;
 
@@ -99,9 +96,6 @@ class LoanRequestModel {
     required this.requestedFirstDueDate,
     required this.status,
     required this.submittedAt,
-    this.reviewedAt,
-    this.reviewedByOwnerId,
-    this.ownerNote,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -119,9 +113,6 @@ class LoanRequestModel {
       requestedFirstDueDate: json['requestedFirstDueDate'] as String,
       status: json['status'] as String,
       submittedAt: json['submittedAt'] as String,
-      reviewedAt: json['reviewedAt'] as String?,
-      reviewedByOwnerId: json['reviewedByOwnerId'] as String?,
-      ownerNote: json['ownerNote'] as String?,
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
     );

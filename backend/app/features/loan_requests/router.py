@@ -10,18 +10,22 @@ from app.db.session import get_db
 from app.features.borrowers.auth_dependencies import get_current_borrower_account
 from app.features.borrowers.auth_service import BorrowerAuthContext
 from app.features.loan_requests.schemas import (
-    LoanRequestCreate,
-    LoanRequestResponse,
+    BorrowerLoanQuoteRequest,
+    BorrowerLoanRequestCreate,
+    BorrowerLoanRequestResponse,
     LoanRequestReviewRequest,
     OwnerLoanRequestDetailResponse,
+    OwnerLoanRequestResponse,
 )
 from app.features.loan_requests.service import (
+    BusinessEstimateRateUnconfiguredError,
     LoanRequestConflictError,
     LoanRequestNotFoundError,
     LoanRequestStateError,
     approve_loan_request,
     cancel_borrower_loan_request,
     get_borrower_loan_request_detail,
+    get_business_estimate_rate,
     get_owner_loan_request_detail,
     list_borrower_loan_requests,
     list_owner_loan_requests,
@@ -29,7 +33,7 @@ from app.features.loan_requests.service import (
     submit_loan_request,
 )
 from app.features.loans.calculator import calculate_quote
-from app.features.loans.schemas import LoanQuoteRequest, LoanQuoteResponse
+from app.features.loans.schemas import LoanQuoteResponse
 from app.features.owner_identity.dependencies import get_current_owner
 from app.features.owner_identity.models import OwnerUser
 
@@ -54,44 +58,56 @@ DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
     status_code=status.HTTP_200_OK,
 )
 async def borrower_loan_quote(
-    payload: LoanQuoteRequest,
+    payload: BorrowerLoanQuoteRequest,
     auth: CurrentBorrowerAuth,
+    db_session: DatabaseSession,
 ) -> LoanQuoteResponse:
-    """Stateless loan quote preview for authenticated borrowers."""
-    quote = calculate_quote(
-        principal=payload.principal,
-        monthly_rate=payload.monthly_rate,
-        term_months=payload.term_months,
-        payment_frequency=payload.payment_frequency,
-        first_due_date=payload.first_due_date,
-    )
-    return LoanQuoteResponse.model_validate(quote)
+    """Stateless loan quote preview for authenticated borrowers using server estimate rate."""
+    try:
+        monthly_rate = await get_business_estimate_rate(db_session)
+        quote = calculate_quote(
+            principal=payload.principal,
+            monthly_rate=monthly_rate,
+            term_months=payload.term_months,
+            payment_frequency=payload.payment_frequency,
+            first_due_date=payload.first_due_date,
+        )
+        return LoanQuoteResponse.model_validate(quote)
+    except BusinessEstimateRateUnconfiguredError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
 
 
 @borrower_loan_requests_router.post(
     "",
-    response_model=LoanRequestResponse,
+    response_model=BorrowerLoanRequestResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def borrower_submit_loan_request(
-    payload: LoanRequestCreate,
+    payload: BorrowerLoanRequestCreate,
     auth: CurrentBorrowerAuth,
     db_session: DatabaseSession,
-) -> LoanRequestResponse:
+) -> BorrowerLoanRequestResponse:
     """Submit a new loan request for the authenticated borrower."""
     try:
         req = await submit_loan_request(
             db_session,
             borrower_id=auth.borrower.id,
             principal=payload.principal,
-            monthly_rate=payload.monthly_rate,
             term_months=payload.term_months,
             payment_frequency=payload.payment_frequency,
             first_due_date=payload.first_due_date,
         )
         await db_session.commit()
         await db_session.refresh(req)
-        return LoanRequestResponse.model_validate(req)
+        return BorrowerLoanRequestResponse.model_validate(req)
+    except BusinessEstimateRateUnconfiguredError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     except LoanRequestConflictError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -101,28 +117,28 @@ async def borrower_submit_loan_request(
 
 @borrower_loan_requests_router.get(
     "",
-    response_model=list[LoanRequestResponse],
+    response_model=list[BorrowerLoanRequestResponse],
     status_code=status.HTTP_200_OK,
 )
 async def borrower_list_loan_requests(
     auth: CurrentBorrowerAuth,
     db_session: DatabaseSession,
-) -> list[LoanRequestResponse]:
+) -> list[BorrowerLoanRequestResponse]:
     """List all loan requests created by the authenticated borrower."""
     requests = await list_borrower_loan_requests(db_session, auth.borrower.id)
-    return [LoanRequestResponse.model_validate(r) for r in requests]
+    return [BorrowerLoanRequestResponse.model_validate(r) for r in requests]
 
 
 @borrower_loan_requests_router.get(
     "/{request_id}",
-    response_model=LoanRequestResponse,
+    response_model=BorrowerLoanRequestResponse,
     status_code=status.HTTP_200_OK,
 )
 async def borrower_get_loan_request_detail(
     request_id: UUID,
     auth: CurrentBorrowerAuth,
     db_session: DatabaseSession,
-) -> LoanRequestResponse:
+) -> BorrowerLoanRequestResponse:
     """Fetch detail of a specific loan request owned by the authenticated borrower."""
     try:
         req = await get_borrower_loan_request_detail(
@@ -130,7 +146,7 @@ async def borrower_get_loan_request_detail(
             borrower_id=auth.borrower.id,
             request_id=request_id,
         )
-        return LoanRequestResponse.model_validate(req)
+        return BorrowerLoanRequestResponse.model_validate(req)
     except LoanRequestNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -140,14 +156,14 @@ async def borrower_get_loan_request_detail(
 
 @borrower_loan_requests_router.post(
     "/{request_id}/cancel",
-    response_model=LoanRequestResponse,
+    response_model=BorrowerLoanRequestResponse,
     status_code=status.HTTP_200_OK,
 )
 async def borrower_cancel_loan_request(
     request_id: UUID,
     auth: CurrentBorrowerAuth,
     db_session: DatabaseSession,
-) -> LoanRequestResponse:
+) -> BorrowerLoanRequestResponse:
     """Cancel a pending loan request owned by the authenticated borrower."""
     try:
         req = await cancel_borrower_loan_request(
@@ -157,7 +173,7 @@ async def borrower_cancel_loan_request(
         )
         await db_session.commit()
         await db_session.refresh(req)
-        return LoanRequestResponse.model_validate(req)
+        return BorrowerLoanRequestResponse.model_validate(req)
     except LoanRequestNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -267,7 +283,7 @@ async def owner_get_loan_request_detail(
 
 @owner_loan_requests_router.post(
     "/{request_id}/approve",
-    response_model=LoanRequestResponse,
+    response_model=OwnerLoanRequestResponse,
     status_code=status.HTTP_200_OK,
 )
 async def owner_approve_loan_request(
@@ -275,7 +291,7 @@ async def owner_approve_loan_request(
     owner: CurrentOwner,
     db_session: DatabaseSession,
     payload: LoanRequestReviewRequest | None = None,
-) -> LoanRequestResponse:
+) -> OwnerLoanRequestResponse:
     """Approve a pending loan request (does NOT create Loan instance)."""
     try:
         note = payload.owner_note if payload else None
@@ -287,7 +303,7 @@ async def owner_approve_loan_request(
         )
         await db_session.commit()
         await db_session.refresh(req)
-        return LoanRequestResponse.model_validate(req)
+        return OwnerLoanRequestResponse.model_validate(req)
     except LoanRequestNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -302,7 +318,7 @@ async def owner_approve_loan_request(
 
 @owner_loan_requests_router.post(
     "/{request_id}/reject",
-    response_model=LoanRequestResponse,
+    response_model=OwnerLoanRequestResponse,
     status_code=status.HTTP_200_OK,
 )
 async def owner_reject_loan_request(
@@ -310,7 +326,7 @@ async def owner_reject_loan_request(
     owner: CurrentOwner,
     db_session: DatabaseSession,
     payload: LoanRequestReviewRequest | None = None,
-) -> LoanRequestResponse:
+) -> OwnerLoanRequestResponse:
     """Reject a pending loan request."""
     try:
         note = payload.owner_note if payload else None
@@ -322,7 +338,7 @@ async def owner_reject_loan_request(
         )
         await db_session.commit()
         await db_session.refresh(req)
-        return LoanRequestResponse.model_validate(req)
+        return OwnerLoanRequestResponse.model_validate(req)
     except LoanRequestNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

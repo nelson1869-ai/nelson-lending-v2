@@ -54,7 +54,8 @@ class LoanRequestDetailScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(request.status).withValues(alpha: 0.1),
+                        color: _getStatusColor(request.status)
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -94,33 +95,6 @@ class LoanRequestDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            if (request.ownerNote != null && request.ownerNote!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Card(
-                color: Colors.blue.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Owner Note',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade900,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        request.ownerNote!,
-                        style: TextStyle(color: Colors.blue.shade900),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
             if (request.status == 'pending') ...[
               const SizedBox(height: 24),
               OutlinedButton.icon(
