@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.borrowers.models import Borrower
+from app.features.business_settings.models import BusinessSetting
 from app.features.loan_requests.models import LoanRequest
 from app.features.loans.calculator import calculate_quote, quantize_money, quantize_rate
 
@@ -25,17 +26,37 @@ class LoanRequestStateError(Exception):
     """Raised when an invalid state transition is attempted on a loan request."""
 
 
+class BusinessEstimateRateUnconfiguredError(Exception):
+    """Raised when business estimate rate has not been configured by the owner."""
+
+
+async def get_business_estimate_rate(db_session: AsyncSession) -> Decimal:
+    """Load default monthly estimate rate from BusinessSetting singleton."""
+    stmt = select(BusinessSetting.default_monthly_estimate_rate).where(
+        BusinessSetting.id == "default"
+    )
+    res = await db_session.execute(stmt)
+    rate = res.scalar_one_or_none()
+    if rate is None:
+        raise BusinessEstimateRateUnconfiguredError(
+            "Loan estimate/request cannot currently be calculated because the lending rate "
+            "has not yet been configured by the owner."
+        )
+    return rate
+
+
 async def submit_loan_request(
     db_session: AsyncSession,
     *,
     borrower_id: UUID,
     principal: Decimal,
-    monthly_rate: Decimal,
     term_months: int,
     payment_frequency: str,
     first_due_date: date,
 ) -> LoanRequest:
     """Submit a new loan request for an authenticated borrower."""
+    monthly_rate = await get_business_estimate_rate(db_session)
+
     # Check for existing pending request to provide clean error
     stmt = select(LoanRequest).where(
         LoanRequest.borrower_id == borrower_id,

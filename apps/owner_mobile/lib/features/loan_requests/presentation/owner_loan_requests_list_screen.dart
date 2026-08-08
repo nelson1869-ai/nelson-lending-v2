@@ -57,7 +57,8 @@ class _OwnerLoanRequestsListScreenState
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -66,9 +67,11 @@ class _OwnerLoanRequestsListScreenState
                   const SizedBox(width: 8),
                   _buildFilterChip('All Requests', 'all', state.selectedFilter),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Approved', 'approved', state.selectedFilter),
+                  _buildFilterChip(
+                      'Approved', 'approved', state.selectedFilter),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Rejected', 'rejected', state.selectedFilter),
+                  _buildFilterChip(
+                      'Rejected', 'rejected', state.selectedFilter),
                 ],
               ),
             ),

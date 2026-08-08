@@ -32,13 +32,15 @@ class OwnerLoanRequestsState {
   }
 }
 
-final ownerLoanRequestsControllerProvider = StateNotifierProvider<
-    OwnerLoanRequestsController, OwnerLoanRequestsState>((ref) {
+final ownerLoanRequestsControllerProvider =
+    StateNotifierProvider<OwnerLoanRequestsController, OwnerLoanRequestsState>(
+        (ref) {
   final client = ref.watch(ownerLoanRequestsApiClientProvider);
   return OwnerLoanRequestsController(client);
 });
 
-class OwnerLoanRequestsController extends StateNotifier<OwnerLoanRequestsState> {
+class OwnerLoanRequestsController
+    extends StateNotifier<OwnerLoanRequestsState> {
   final OwnerLoanRequestsApiClient _client;
 
   OwnerLoanRequestsController(this._client)

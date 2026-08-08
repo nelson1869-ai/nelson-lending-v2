@@ -12,11 +12,9 @@ class LoanRequestFormScreen extends ConsumerStatefulWidget {
       _LoanRequestFormScreenState();
 }
 
-class _LoanRequestFormScreenState
-    extends ConsumerState<LoanRequestFormScreen> {
+class _LoanRequestFormScreenState extends ConsumerState<LoanRequestFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _principalController = TextEditingController(text: '5000');
-  final _rateController = TextEditingController(text: '5.0');
   final _termController = TextEditingController(text: '3');
 
   String _paymentFrequency = 'monthly';
@@ -25,7 +23,6 @@ class _LoanRequestFormScreenState
   @override
   void dispose() {
     _principalController.dispose();
-    _rateController.dispose();
     _termController.dispose();
     super.dispose();
   }
@@ -38,13 +35,10 @@ class _LoanRequestFormScreenState
     if (!_formKey.currentState!.validate()) return;
 
     final principal = double.parse(_principalController.text.trim());
-    final ratePercent = double.parse(_rateController.text.trim());
-    final monthlyRate = ratePercent / 100.0;
     final termMonths = int.parse(_termController.text.trim());
 
     ref.read(loanRequestsControllerProvider.notifier).calculateQuote(
           principal: principal,
-          monthlyRate: monthlyRate,
           termMonths: termMonths,
           paymentFrequency: _paymentFrequency,
           firstDueDate: _formatDate(_firstDueDate),
@@ -55,19 +49,15 @@ class _LoanRequestFormScreenState
     if (!_formKey.currentState!.validate()) return;
 
     final principal = double.parse(_principalController.text.trim());
-    final ratePercent = double.parse(_rateController.text.trim());
-    final monthlyRate = ratePercent / 100.0;
     final termMonths = int.parse(_termController.text.trim());
 
-    final success = await ref
-        .read(loanRequestsControllerProvider.notifier)
-        .submitRequest(
-          principal: principal,
-          monthlyRate: monthlyRate,
-          termMonths: termMonths,
-          paymentFrequency: _paymentFrequency,
-          firstDueDate: _formatDate(_firstDueDate),
-        );
+    final success =
+        await ref.read(loanRequestsControllerProvider.notifier).submitRequest(
+              principal: principal,
+              termMonths: termMonths,
+              paymentFrequency: _paymentFrequency,
+              firstDueDate: _formatDate(_firstDueDate),
+            );
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -124,23 +114,6 @@ class _LoanRequestFormScreenState
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _rateController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Monthly Rate (%)',
-                  suffixText: '%',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Required';
-                  final n = double.tryParse(val.trim());
-                  if (n == null || n < 0) return 'Must be non-negative';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
                 controller: _termController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
@@ -177,8 +150,8 @@ class _LoanRequestFormScreenState
                     setState(() {
                       _paymentFrequency = val;
                       if (_paymentFrequency == 'twice_monthly') {
-                        _firstDueDate = DateTime(_firstDueDate.year,
-                            _firstDueDate.month, 15);
+                        _firstDueDate = DateTime(
+                            _firstDueDate.year, _firstDueDate.month, 15);
                       }
                     });
                   }
@@ -258,6 +231,8 @@ class _LoanRequestFormScreenState
               ),
             ),
             const Divider(height: 20),
+            _buildRow('Monthly Rate',
+                '${(quote.monthlyRate * 100).toStringAsFixed(2)}%'),
             _buildRow('Periodic Payment',
                 '₱${quote.periodicPayment.toStringAsFixed(2)}'),
             _buildRow('Total Payments', '${quote.numberOfPayments} payments'),

@@ -67,7 +67,8 @@ class OwnerLoanQuotePreviewModel {
       totalInterest: (num.parse(json['totalInterest'].toString())).toDouble(),
       totalAmount: (num.parse(json['totalAmount'].toString())).toDouble(),
       schedule: rawSchedule
-          .map((e) => OwnerScheduleItemModel.fromJson(e as Map<String, dynamic>))
+          .map(
+              (e) => OwnerScheduleItemModel.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }

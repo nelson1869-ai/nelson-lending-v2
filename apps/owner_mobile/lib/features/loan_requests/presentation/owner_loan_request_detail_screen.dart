@@ -44,7 +44,8 @@ class _OwnerLoanRequestDetailScreenState
       builder: (ctx) {
         _noteController.clear();
         return AlertDialog(
-          title: Text(isApprove ? 'Approve Loan Request' : 'Reject Loan Request'),
+          title:
+              Text(isApprove ? 'Approve Loan Request' : 'Reject Loan Request'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +136,8 @@ class _OwnerLoanRequestDetailScreenState
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(req.status).withValues(alpha: 0.1),
+                        color:
+                            _getStatusColor(req.status).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -187,7 +189,8 @@ class _OwnerLoanRequestDetailScreenState
                     const Divider(height: 20),
                     _buildRow('Monthly Rate',
                         '${(req.requestedMonthlyRate * 100).toStringAsFixed(2)}%'),
-                    _buildRow('Term Months', '${req.requestedTermMonths} months'),
+                    _buildRow(
+                        'Term Months', '${req.requestedTermMonths} months'),
                     _buildRow('Frequency', req.requestedPaymentFrequency),
                     _buildRow('First Due Date', req.requestedFirstDueDate),
                     _buildRow('Submitted At', req.submittedAt),
@@ -213,11 +216,12 @@ class _OwnerLoanRequestDetailScreenState
                     const Divider(height: 20),
                     _buildRow('Periodic Payment',
                         '₱${quote.periodicPayment.toStringAsFixed(2)}'),
-                    _buildRow('Total Payments', '${quote.numberOfPayments} payments'),
+                    _buildRow(
+                        'Total Payments', '${quote.numberOfPayments} payments'),
                     _buildRow('Total Interest',
                         '₱${quote.totalInterest.toStringAsFixed(2)}'),
-                    _buildRow(
-                        'Total Amount', '₱${quote.totalAmount.toStringAsFixed(2)}'),
+                    _buildRow('Total Amount',
+                        '₱${quote.totalAmount.toStringAsFixed(2)}'),
                     const SizedBox(height: 12),
                     const Text('Schedule Projection',
                         style: TextStyle(fontWeight: FontWeight.bold)),
@@ -230,7 +234,8 @@ class _OwnerLoanRequestDetailScreenState
                               Text('#${item.paymentNumber} (${item.dueDate})'),
                               Text(
                                 '₱${item.paymentAmount.toStringAsFixed(2)} (Int: ₱${item.interestPaid.toStringAsFixed(2)})',
-                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500),
                               ),
                             ],
                           ),

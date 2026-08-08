@@ -56,8 +56,7 @@ class _LoanRequestsListScreenState
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.of(context).push(
-            MaterialPageRoute(
-                builder: (_) => const LoanRequestFormScreen()),
+            MaterialPageRoute(builder: (_) => const LoanRequestFormScreen()),
           );
           ref.read(loanRequestsControllerProvider.notifier).fetchRequests();
         },
@@ -107,8 +106,8 @@ class _LoanRequestsListScreenState
                             const SizedBox(height: 16),
                             const Text(
                               'No loan requests submitted yet',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.grey),
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(

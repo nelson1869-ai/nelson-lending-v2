@@ -15,7 +15,8 @@ class OwnerLoanRequestsApiClient {
 
   OwnerLoanRequestsApiClient(this._dio);
 
-  Future<List<OwnerLoanRequestDetailModel>> listRequests({String? statusFilter}) async {
+  Future<List<OwnerLoanRequestDetailModel>> listRequests(
+      {String? statusFilter}) async {
     final response = await _dio.get(
       '/owner/loan-requests',
       queryParameters: statusFilter != null && statusFilter.isNotEmpty

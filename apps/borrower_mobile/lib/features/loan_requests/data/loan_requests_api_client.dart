@@ -16,7 +16,6 @@ class LoanRequestsApiClient {
 
   Future<LoanQuoteModel> calculateQuote({
     required double principal,
-    required double monthlyRate,
     required int termMonths,
     required String paymentFrequency,
     required String firstDueDate,
@@ -25,7 +24,6 @@ class LoanRequestsApiClient {
       '/borrower/loan-requests/quote',
       data: {
         'principal': principal.toStringAsFixed(2),
-        'monthlyRate': monthlyRate.toString(),
         'termMonths': termMonths,
         'paymentFrequency': paymentFrequency,
         'firstDueDate': firstDueDate,
@@ -36,7 +34,6 @@ class LoanRequestsApiClient {
 
   Future<LoanRequestModel> submitRequest({
     required double principal,
-    required double monthlyRate,
     required int termMonths,
     required String paymentFrequency,
     required String firstDueDate,
@@ -45,7 +42,6 @@ class LoanRequestsApiClient {
       '/borrower/loan-requests',
       data: {
         'principal': principal.toStringAsFixed(2),
-        'monthlyRate': monthlyRate.toString(),
         'termMonths': termMonths,
         'paymentFrequency': paymentFrequency,
         'firstDueDate': firstDueDate,
@@ -68,7 +64,8 @@ class LoanRequestsApiClient {
   }
 
   Future<LoanRequestModel> cancelRequest(String requestId) async {
-    final response = await _dio.post('/borrower/loan-requests/$requestId/cancel');
+    final response =
+        await _dio.post('/borrower/loan-requests/$requestId/cancel');
     return LoanRequestModel.fromJson(response.data as Map<String, dynamic>);
   }
 }

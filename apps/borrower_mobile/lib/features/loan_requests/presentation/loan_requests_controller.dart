@@ -65,7 +65,6 @@ class LoanRequestsController extends StateNotifier<LoanRequestsState> {
 
   Future<LoanQuoteModel?> calculateQuote({
     required double principal,
-    required double monthlyRate,
     required int termMonths,
     required String paymentFrequency,
     required String firstDueDate,
@@ -74,7 +73,6 @@ class LoanRequestsController extends StateNotifier<LoanRequestsState> {
     try {
       final quote = await _client.calculateQuote(
         principal: principal,
-        monthlyRate: monthlyRate,
         termMonths: termMonths,
         paymentFrequency: paymentFrequency,
         firstDueDate: firstDueDate,
@@ -97,7 +95,6 @@ class LoanRequestsController extends StateNotifier<LoanRequestsState> {
 
   Future<bool> submitRequest({
     required double principal,
-    required double monthlyRate,
     required int termMonths,
     required String paymentFrequency,
     required String firstDueDate,
@@ -106,7 +103,6 @@ class LoanRequestsController extends StateNotifier<LoanRequestsState> {
     try {
       await _client.submitRequest(
         principal: principal,
-        monthlyRate: monthlyRate,
         termMonths: termMonths,
         paymentFrequency: paymentFrequency,
         firstDueDate: firstDueDate,
