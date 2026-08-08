@@ -35,6 +35,11 @@ async def setup_owner_and_headers(session: AsyncSession) -> dict[str, str]:
     return {"Authorization": f"Bearer {token.value}"}
 
 
+def with_key(headers: dict[str, str], key: str | None = None) -> dict[str, str]:
+    """Return a headers dictionary with a unique Idempotency-Key."""
+    return {**headers, "Idempotency-Key": key or f"idem-{uuid4().hex}"}
+
+
 async def setup_borrower_and_headers(
     session: AsyncSession,
 ) -> tuple[BorrowerAccount, dict[str, str]]:
@@ -81,7 +86,7 @@ async def setup_active_loan(
         requested_term_months=1,
         requested_payment_frequency="monthly",
         requested_monthly_rate=monthly_rate,
-        requested_first_due_date=date(2026, 9, 15),
+        requested_first_due_date=date(2026, 6, 8),
         status="approved",
         submitted_at=datetime.now(UTC),
     )
@@ -98,10 +103,11 @@ async def setup_active_loan(
         term_months=1,
         payment_frequency="monthly",
         number_of_payments=1,
-        first_due_date=date(2026, 9, 15),
-        final_due_date=date(2026, 9, 15),
+        first_due_date=date(2026, 6, 8),
+        final_due_date=date(2026, 6, 8),
+        next_interest_due_date=date(2026, 6, 8),
         status=status,
-        disbursed_at=datetime.now(UTC) if status == "active" else None,
+        disbursed_at=datetime(2026, 5, 8, tzinfo=UTC) if status == "active" else None,
         accrued_interest=Decimal("0.00"),
     )
     session.add(loan)
@@ -116,13 +122,13 @@ async def test_case_a_exact_interest_payment(
     account, _ = await setup_borrower_and_headers(db_session)
     loan = await setup_active_loan(db_session, account.borrower_id)
 
-    # ₱2,000 principal @ 10% monthly = ₱200 interest due. Payment = ₱200.
+    # ₱2,000 principal @ 10% monthly = ₱200 interest due on 2026-06-08. Payment = ₱200.
     res = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
+        headers=with_key(owner_headers),
         json={
             "amount": "200.00",
-            "payment_date": "2026-09-15",
+            "payment_date": "2026-06-08",
             "reference": "REF-CASE-A",
             "note": "Exact interest payment",
         },
@@ -148,13 +154,13 @@ async def test_case_b_interest_and_principal_reduction(
     account, _ = await setup_borrower_and_headers(db_session)
     loan = await setup_active_loan(db_session, account.borrower_id)
 
-    # ₱2,000 principal @ 10% monthly = ₱200 interest due. Payment = ₱700.
+    # ₱2,000 principal @ 10% monthly = ₱200 interest due on 2026-06-08. Payment = ₱700.
     res = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
+        headers=with_key(owner_headers),
         json={
             "amount": "700.00",
-            "payment_date": "2026-09-15",
+            "payment_date": "2026-06-08",
             "reference": "REF-CASE-B",
         },
     )
@@ -179,13 +185,13 @@ async def test_case_c_payoff_with_overpayment(
     account, _ = await setup_borrower_and_headers(db_session)
     loan = await setup_active_loan(db_session, account.borrower_id)
 
-    # ₱2,000 principal @ 10% monthly = ₱200 interest due. Payment = ₱2,500.
+    # ₱2,000 principal @ 10% monthly = ₱200 interest due on 2026-06-08. Payment = ₱2,500.
     res = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
+        headers=with_key(owner_headers),
         json={
             "amount": "2500.00",
-            "payment_date": "2026-09-15",
+            "payment_date": "2026-06-08",
         },
     )
     assert res.status_code == 201
@@ -208,13 +214,13 @@ async def test_partial_interest_payment(api_client: AsyncClient, db_session: Asy
     account, _ = await setup_borrower_and_headers(db_session)
     loan = await setup_active_loan(db_session, account.borrower_id)
 
-    # ₱2,000 principal @ 10% monthly = ₱200 interest due. Payment = ₱100.
+    # ₱2,000 principal @ 10% monthly = ₱200 interest due on 2026-06-08. Payment = ₱100.
     res = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
+        headers=with_key(owner_headers),
         json={
             "amount": "100.00",
-            "payment_date": "2026-09-15",
+            "payment_date": "2026-06-08",
         },
     )
     assert res.status_code == 201
@@ -234,18 +240,18 @@ async def test_subsequent_interest_on_reduced_principal(
     account, _ = await setup_borrower_and_headers(db_session)
     loan = await setup_active_loan(db_session, account.borrower_id)
 
-    # First payment: ₱700 (reduces principal to ₱1,500)
+    # First payment: ₱700 (reduces principal to ₱1,500) on 2026-06-08
     await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
-        json={"amount": "700.00", "payment_date": "2026-09-15"},
+        headers=with_key(owner_headers),
+        json={"amount": "700.00", "payment_date": "2026-06-08"},
     )
 
-    # Second payment: Next 10% monthly interest on ₱1,500 = ₱150.00. Payment = ₱150.00
+    # Second payment: Next 10% monthly interest on ₱1,500 = ₱150.00 on 2026-07-08. Payment = ₱150.00
     res = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
-        json={"amount": "150.00", "payment_date": "2026-10-15"},
+        headers=with_key(owner_headers),
+        json={"amount": "150.00", "payment_date": "2026-07-08"},
     )
     assert res.status_code == 201
     data = res.json()
@@ -262,29 +268,29 @@ async def test_multiple_payments_sequence(
     account, _ = await setup_borrower_and_headers(db_session)
     loan = await setup_active_loan(db_session, account.borrower_id)
 
-    # Payment 1: ₱500 (₱200 interest, ₱300 principal -> ₱1700 remaining)
+    # Payment 1 on 2026-06-08: ₱500 (₱200 interest, ₱300 principal -> ₱1700 remaining)
     p1 = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
-        json={"amount": "500.00", "payment_date": "2026-09-15"},
+        headers=with_key(owner_headers),
+        json={"amount": "500.00", "payment_date": "2026-06-08"},
     )
     assert p1.json()["remaining_principal"] == "1700.00"
 
-    # Payment 2: ₱500 (10% of 1700 = ₱170 interest, ₱330 principal -> ₱1370 remaining)
+    # Payment 2 on 2026-07-08: ₱500 (10% of 1700 = ₱170 interest, ₱330 principal -> ₱1370 remaining)
     p2 = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
-        json={"amount": "500.00", "payment_date": "2026-10-15"},
+        headers=with_key(owner_headers),
+        json={"amount": "500.00", "payment_date": "2026-07-08"},
     )
     assert p2.json()["interest_paid"] == "170.00"
     assert p2.json()["principal_paid"] == "330.00"
     assert p2.json()["remaining_principal"] == "1370.00"
 
-    # Payment 3: Payoff ₱1370 principal + 10% of 1370 (₱137) = ₱1507.00
+    # Payment 3 on 2026-08-08: Payoff ₱1370 principal + 10% of 1370 (₱137) = ₱1507.00
     p3 = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
-        json={"amount": "1507.00", "payment_date": "2026-11-15"},
+        headers=with_key(owner_headers),
+        json={"amount": "1507.00", "payment_date": "2026-08-08"},
     )
     assert p3.json()["interest_paid"] == "137.00"
     assert p3.json()["principal_paid"] == "1370.00"
@@ -306,8 +312,8 @@ async def test_invalid_loan_status_rejections(
     )
     res1 = await api_client.post(
         f"/api/v1/owner/loans/{pending_loan.id}/payments",
-        headers=owner_headers,
-        json={"amount": "500.00", "payment_date": "2026-09-15"},
+        headers=with_key(owner_headers),
+        json={"amount": "500.00", "payment_date": "2026-06-15"},
     )
     assert res1.status_code == 400
     assert "pending_disbursement" in res1.json()["detail"]
@@ -316,8 +322,8 @@ async def test_invalid_loan_status_rejections(
     cancelled_loan = await setup_active_loan(db_session, account.borrower_id, status="cancelled")
     res2 = await api_client.post(
         f"/api/v1/owner/loans/{cancelled_loan.id}/payments",
-        headers=owner_headers,
-        json={"amount": "500.00", "payment_date": "2026-09-15"},
+        headers=with_key(owner_headers),
+        json={"amount": "500.00", "payment_date": "2026-06-15"},
     )
     assert res2.status_code == 400
     assert "cancelled" in res2.json()["detail"]
@@ -335,10 +341,10 @@ async def test_owner_and_borrower_payment_history_visibility(
     # Post payment as Owner
     await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=owner_headers,
+        headers=with_key(owner_headers),
         json={
             "amount": "500.00",
-            "payment_date": "2026-09-15",
+            "payment_date": "2026-06-15",
             "reference": "REF-VISIBILITY",
             "note": "Private owner note",
         },
@@ -375,8 +381,8 @@ async def test_owner_and_borrower_payment_history_visibility(
     # Borrower cannot post payment on Owner route
     borrower_post_res = await api_client.post(
         f"/api/v1/owner/loans/{loan.id}/payments",
-        headers=borrower_a_headers,
-        json={"amount": "500.00", "payment_date": "2026-09-15"},
+        headers=with_key(borrower_a_headers),
+        json={"amount": "500.00", "payment_date": "2026-06-15"},
     )
     assert borrower_post_res.status_code in (401, 403)
 
@@ -407,7 +413,7 @@ async def test_concurrent_payment_row_locking(
             requested_term_months=1,
             requested_payment_frequency="monthly",
             requested_monthly_rate=Decimal("0.10"),
-            requested_first_due_date=date(2026, 9, 15),
+            requested_first_due_date=date(2026, 6, 15),
             status="approved",
             submitted_at=datetime.now(UTC),
         )
@@ -424,10 +430,12 @@ async def test_concurrent_payment_row_locking(
             term_months=1,
             payment_frequency="monthly",
             number_of_payments=1,
-            first_due_date=date(2026, 9, 15),
-            final_due_date=date(2026, 9, 15),
+            first_due_date=date(2026, 6, 15),
+            final_due_date=date(2026, 6, 15),
+            next_interest_due_date=date(2026, 6, 15),
             status="active",
-            disbursed_at=datetime.now(UTC),
+            disbursed_at=datetime(2026, 5, 15, tzinfo=UTC),
+            accrued_interest=Decimal("0.00"),
         )
         session.add(loan)
         await session.flush()
@@ -440,22 +448,23 @@ async def test_concurrent_payment_row_locking(
         from app.features.payments.schemas import PaymentPostRequest
         from app.features.payments.service import post_payment
 
-        async def post_one(amt: str) -> None:
+        async def post_one(amt: str, key_suffix: str) -> None:
             async with SessionMaker() as s:
                 await post_payment(
                     s,
                     loan_id,
                     PaymentPostRequest(
                         amount=Decimal(amt),
-                        payment_date=date(2026, 9, 15),
+                        payment_date=date(2026, 6, 15),
+                        idempotency_key=f"idem-conc-{key_suffix}",
                     ),
                 )
                 await s.commit()
 
-        # Post two ₱600 payments concurrently against ₱1000 loan
+        # Post two ₱600 payments concurrently against ₱1000 loan with different keys
         results = await asyncio.gather(
-            post_one("600.00"),
-            post_one("600.00"),
+            post_one("600.00", "1"),
+            post_one("600.00", "2"),
             return_exceptions=True,
         )
 

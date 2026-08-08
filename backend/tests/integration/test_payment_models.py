@@ -55,6 +55,8 @@ async def create_active_loan(session: AsyncSession) -> Loan:
         number_of_payments=1,
         first_due_date=date(2026, 9, 15),
         final_due_date=date(2026, 9, 15),
+        next_interest_due_date=date(2026, 9, 15),
+        accrued_interest=Decimal("0.00"),
         status="active",
         disbursed_at=datetime.now(UTC),
     )
