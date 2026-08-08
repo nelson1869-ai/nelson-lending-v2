@@ -456,8 +456,8 @@ async def test_concurrent_payment_row_locking(
                     PaymentPostRequest(
                         amount=Decimal(amt),
                         payment_date=date(2026, 6, 15),
-                        idempotency_key=f"idem-conc-{key_suffix}",
                     ),
+                    idempotency_key=f"idem-conc-{key_suffix}",
                 )
                 await s.commit()
 

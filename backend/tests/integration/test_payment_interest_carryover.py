@@ -115,7 +115,9 @@ async def _active_loan(
         final_due_date=first_due_date + timedelta(days=90),
         next_interest_due_date=next_interest_due_date or first_due_date,
         status="active",
-        disbursed_at=datetime.combine(first_due_date - timedelta(days=15), datetime.min.time(), tzinfo=UTC),
+        disbursed_at=datetime.combine(
+            first_due_date - timedelta(days=15), datetime.min.time(), tzinfo=UTC
+        ),
     )
     session.add(loan)
     await session.flush()
