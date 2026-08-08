@@ -133,15 +133,23 @@ never force-pushed or merged without explicit review approval.
 
 ### M07 — Owner Flutter Application Foundation
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m07-owner-flutter-foundation`
 - **Goal:** Establish the separate Owner mobile client and connect it securely to the backend.
 - **Topics to Learn:** Flutter architecture; Riverpod; Dio; GoRouter; secure storage; API integration; Owner session handling.
-- **Deliverables:** Owner app scaffold; environment/API client; navigation; session state; login and protected-shell UI.
-- **Tests / Quality Gates:** `flutter analyze`; unit/widget tests; navigation/session tests; API error handling; no financial calculations in the client.
-- **Completion Commit:** Pending
+- **Deliverables:** Owner app scaffold at `apps/owner_mobile`; environment/API client; navigation; session state; login and protected-shell UI.
+- **Tests / Quality Gates:** `flutter analyze` passed; 22 unit/widget/router/auth tests passed in `flutter test`; `dart format` passed; backend regression quality gates passed.
+- **Educational Commits:**
+  - `chore(owner): scaffold flutter application`
+  - `feat(owner): add app architecture and navigation`
+  - `feat(owner): add api client and secure session storage`
+  - `feat(owner): implement owner authentication flow`
+  - `test(owner): cover owner app foundation`
+  - `fix(owner): propagate expired sessions to auth state`
+  - `chore(dev): add reliable local application launcher`
+- **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Notes / Lessons Learned:** The Owner mobile application uses a clean feature-oriented architecture with Flutter Riverpod for state management, GoRouter for declarative protected routing, Dio for HTTP communication, and FlutterSecureStorage for sensitive session persistence. Short-lived access JWTs are held in memory, while high-entropy refresh tokens are securely stored and rotated atomically on refresh. Single-flight refresh prevents concurrency race conditions. The app strictly enforces the single-Owner business model without staff roles or RBAC matrices and isolates Owner authentication from Borrower identity.
 
 ### M08 — Borrower Flutter Application Foundation
 
