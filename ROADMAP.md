@@ -40,7 +40,7 @@ on `main`. Nothing is pushed until a later milestone explicitly introduces a rem
 
 ### M02 — Backend Foundation
 
-- **Status:** Not Started
+- **Status:** In Progress
 - **Branch:** `feature/m02-backend-foundation`
 - **Goal:** Establish a minimal, testable FastAPI backend and its development toolchain.
 - **Topics to Learn:** Python project structure; FastAPI; Pydantic Settings; dependency management; async SQLAlchemy; pytest; Ruff; mypy; health checks.
