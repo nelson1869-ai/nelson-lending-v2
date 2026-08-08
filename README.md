@@ -1,9 +1,10 @@
 # Lending Nelson V2
 
-> **Status: M01 — Architecture & Governance Foundation**
+> **Status: M02 — Backend Foundation**
 
-Lending Nelson V2 is a planned production-quality lending platform and a structured full-stack
-learning journey. M01 defines architecture and governance only; no application is implemented yet.
+Lending Nelson V2 is a production-quality lending platform in incremental development and a
+structured full-stack learning journey. M02 establishes the backend infrastructure and quality
+tooling only; business features are not implemented yet.
 
 The target system has four core components:
 
