@@ -28,4 +28,10 @@ echo "==> mypy"
 echo "==> Alembic heads"
 "$python_bin" -m alembic heads
 
+echo "==> Alembic current"
+"$python_bin" -m alembic current
+
+echo "==> Alembic drift check"
+"$python_bin" -m alembic check
+
 echo "==> Backend verification complete"
