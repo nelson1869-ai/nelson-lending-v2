@@ -5,19 +5,61 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="${PROJECT_ROOT}/backend"
 OWNER_APP_DIR="${PROJECT_ROOT}/apps/owner_mobile"
+BORROWER_APP_DIR="${PROJECT_ROOT}/apps/borrower_mobile"
 PYTHON_BIN="${BACKEND_DIR}/.venv/bin/python"
 
-BACKEND_PID=""
+# Usage help display
+show_help() {
+    cat << 'EOF'
+==================================================
+ Lending Nelson V2 — Local Development Launcher
+==================================================
 
-# Cleanup trap to ensure background backend process is stopped on exit or interrupt
-cleanup() {
-    if [[ -n "${BACKEND_PID:-}" ]] && kill -0 "$BACKEND_PID" 2>/dev/null; then
-        echo ""
-        echo "Stopping background FastAPI process (PID: ${BACKEND_PID})..."
-        kill "$BACKEND_PID" 2>/dev/null || true
-    fi
+Usage:
+  ./start.sh [target]
+
+Available Targets:
+  backend   Runs Alembic migrations and starts FastAPI backend in foreground on 0.0.0.0:8000.
+  owner     Verifies backend readiness and launches Owner Flutter application.
+  borrower  Verifies backend readiness and launches Borrower Flutter application.
+  help      Displays this usage message.
+
+Environment Overrides:
+  API_BASE_URL        Base API URL for Flutter apps (default: http://10.0.2.2:8000).
+  FLUTTER_DEVICE_ID   Specific Flutter device ID (e.g. emulator-5554).
+  ANDROID_EMULATOR    Target emulator AVD name to launch if none active (default: Small_Phone).
+
+Examples:
+  Terminal 1: ./start.sh backend
+  Terminal 2: ./start.sh owner
+  Terminal 3: ./start.sh borrower
+
+  Physical Device:
+    API_BASE_URL=http://192.168.1.50:8000 ./start.sh borrower
+
+EOF
 }
-trap cleanup EXIT INT TERM
+
+TARGET_ARG="${1:-}"
+
+if [[ "$TARGET_ARG" == "help" || "$TARGET_ARG" == "--help" || "$TARGET_ARG" == "-h" ]]; then
+    show_help
+    exit 0
+fi
+
+if [[ -z "$TARGET_ARG" ]]; then
+    echo "Notice: No target specified. Defaulting to 'owner' (use './start.sh help' for usage)."
+    TARGET_APP="owner"
+else
+    TARGET_APP="$TARGET_ARG"
+fi
+
+if [[ "$TARGET_APP" != "backend" && "$TARGET_APP" != "owner" && "$TARGET_APP" != "borrower" ]]; then
+    echo "ERROR: Invalid target '${TARGET_APP}'."
+    echo ""
+    show_help
+    exit 1
+fi
 
 # Helper function to invoke Flutter across WSL / Windows seamlessly
 run_flutter() {
@@ -35,113 +77,87 @@ run_flutter() {
 
 echo "=================================================="
 echo " Lending Nelson V2 — Local Development Launcher"
+echo " Target: ${TARGET_APP}"
 echo "=================================================="
 
-# [1/7] Validate environment
-echo "[1/7] Validating development environment..."
-
-if [[ ! -x "$PYTHON_BIN" ]]; then
-    echo "ERROR: Backend Python virtual environment not found at:"
-    echo "  ${PYTHON_BIN}"
-    echo "Please set up backend/.venv first according to backend/README.md"
-    exit 1
-fi
-
-if [[ ! -f "${BACKEND_DIR}/alembic.ini" ]]; then
-    echo "ERROR: Missing alembic.ini in ${BACKEND_DIR}"
-    exit 1
-fi
-
-if [[ ! -f "${OWNER_APP_DIR}/pubspec.yaml" ]]; then
-    echo "ERROR: Missing pubspec.yaml in ${OWNER_APP_DIR}"
-    exit 1
-fi
-
-echo "✓ Environment validated."
-
-# [2/7] Stop existing backend process on port 8000
-echo "[2/7] Stopping previous backend instances on port 8000..."
-if command -v fuser >/dev/null 2>&1; then
-    fuser -k 8000/tcp >/dev/null 2>&1 || true
-fi
-pkill -f "uvicorn app.main:app" >/dev/null 2>&1 || true
-sleep 1
-
-# [3/7] Run Alembic migrations
-echo "[3/7] Applying Alembic database migrations..."
-(
-    cd "$BACKEND_DIR"
-    "$PYTHON_BIN" -m alembic upgrade head
-)
-
-# [4/7] Start FastAPI backend
-echo "[4/7] Starting FastAPI backend on http://0.0.0.0:8000..."
-UVICORN_LOG="${BACKEND_DIR}/uvicorn.log"
-rm -f "$UVICORN_LOG"
-
-(
-    cd "$BACKEND_DIR"
-    nohup "$PYTHON_BIN" -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload > "$UVICORN_LOG" 2>&1 &
-    echo $! > "${BACKEND_DIR}/.uvicorn.pid"
-)
-BACKEND_PID="$(cat "${BACKEND_DIR}/.uvicorn.pid")"
-rm -f "${BACKEND_DIR}/.uvicorn.pid"
-
-echo "Backend process launched with PID: ${BACKEND_PID} (Logs: ${UVICORN_LOG})"
-
-# [5/7] Check backend liveness and readiness
-echo "[5/7] Verifying backend health..."
-BACKEND_LIVE=false
-
-for _ in {1..20}; do
-    if curl -fsS http://127.0.0.1:8000/health/live >/dev/null 2>&1; then
-        BACKEND_LIVE=true
-        break
-    fi
-
-    if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
-        echo "ERROR: Backend process exited prematurely."
-        if [[ -f "$UVICORN_LOG" ]]; then
-            echo "--- Recent Uvicorn Logs ---"
-            tail -n 50 "$UVICORN_LOG" || true
-        fi
+# -----------------------------------------------------------------------------
+# TARGET: BACKEND
+# -----------------------------------------------------------------------------
+if [[ "$TARGET_APP" == "backend" ]]; then
+    echo "[1/3] Validating backend environment..."
+    if [[ ! -x "$PYTHON_BIN" ]]; then
+        echo "ERROR: Backend Python virtual environment not found at:"
+        echo "  ${PYTHON_BIN}"
+        echo "Please set up backend/.venv first according to backend/README.md"
         exit 1
     fi
 
-    sleep 1
-done
-
-if [[ "$BACKEND_LIVE" != true ]]; then
-    echo "ERROR: Backend failed health liveness check after 20 seconds."
-    if [[ -f "$UVICORN_LOG" ]]; then
-        echo "--- Recent Uvicorn Logs ---"
-        tail -n 50 "$UVICORN_LOG" || true
+    if [[ ! -f "${BACKEND_DIR}/alembic.ini" ]]; then
+        echo "ERROR: Missing alembic.ini in ${BACKEND_DIR}"
+        exit 1
     fi
+
+    # Check if backend is already running on http://127.0.0.1:8000
+    if curl -fsS http://127.0.0.1:8000/health/live >/dev/null 2>&1; then
+        echo "Backend is already running at http://127.0.0.1:8000"
+        exit 0
+    fi
+
+    echo "[2/3] Applying database migrations..."
+    (
+        cd "$BACKEND_DIR"
+        "$PYTHON_BIN" -m alembic upgrade head
+    )
+    echo "✓ Database migrations complete."
+
+    echo "[3/3] Starting FastAPI backend on http://0.0.0.0:8000..."
+    echo "  - API Base:   http://127.0.0.1:8000/api/v1"
+    echo "  - Health:     http://127.0.0.1:8000/health/ready"
+    echo "Press Ctrl+C to stop."
+    echo ""
+
+    cd "$BACKEND_DIR"
+    exec "$PYTHON_BIN" -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+fi
+
+# -----------------------------------------------------------------------------
+# TARGET: OWNER / BORROWER
+# -----------------------------------------------------------------------------
+APP_LAUNCH_DIR=""
+if [[ "$TARGET_APP" == "owner" ]]; then
+    APP_LAUNCH_DIR="$OWNER_APP_DIR"
+elif [[ "$TARGET_APP" == "borrower" ]]; then
+    APP_LAUNCH_DIR="$BORROWER_APP_DIR"
+fi
+
+if [[ ! -f "${APP_LAUNCH_DIR}/pubspec.yaml" ]]; then
+    echo "ERROR: Missing pubspec.yaml in ${APP_LAUNCH_DIR}"
     exit 1
 fi
-echo "✓ Backend liveness verified at http://127.0.0.1:8000/health/live"
 
-# Check database readiness
+echo "[1/3] Verifying backend availability..."
 if ! curl -fsS http://127.0.0.1:8000/health/ready >/dev/null 2>&1; then
-    echo "ERROR: Backend process is alive but database readiness probe failed."
-    if [[ -f "$UVICORN_LOG" ]]; then
-        echo "--- Recent Uvicorn Logs ---"
-        tail -n 50 "$UVICORN_LOG" || true
-    fi
+    echo "ERROR: Backend is not running or not ready at http://127.0.0.1:8000."
+    echo ""
+    echo "Please start the backend in another terminal first:"
+    echo "  ./start.sh backend"
+    echo ""
     exit 1
 fi
-echo "✓ Backend database readiness verified at http://127.0.0.1:8000/health/ready"
+echo "✓ Backend available at http://127.0.0.1:8000"
 
-# [6/7] Prepare Android Device / Emulator
-echo "[6/7] Preparing Android emulator/device..."
+echo "[2/3] Preparing Android device/emulator..."
+FLUTTER_DEVICE_ID="${FLUTTER_DEVICE_ID:-}"
 ANDROID_EMULATOR="${ANDROID_EMULATOR:-Small_Phone}"
 DEVICE_ID=""
 
-# Check if an Android device is already connected
-CONNECTED_DEVICES="$(run_flutter devices 2>/dev/null || true)"
-
-if echo "$CONNECTED_DEVICES" | grep -i "android" >/dev/null 2>&1; then
-    DEVICE_ID="$(echo "$CONNECTED_DEVICES" | grep -i "android" | head -n 1 | awk -F'•' '{print $2}' | xargs || true)"
+if [[ -n "$FLUTTER_DEVICE_ID" ]]; then
+    DEVICE_ID="$FLUTTER_DEVICE_ID"
+else
+    CONNECTED_DEVICES="$(run_flutter devices 2>/dev/null || true)"
+    if echo "$CONNECTED_DEVICES" | grep -i "android" >/dev/null 2>&1; then
+        DEVICE_ID="$(echo "$CONNECTED_DEVICES" | grep -i "android" | head -n 1 | awk -F'•' '{print $2}' | xargs || true)"
+    fi
 fi
 
 if [[ -z "$DEVICE_ID" ]]; then
@@ -176,27 +192,19 @@ fi
 
 echo "✓ Android device target ready: ${DEVICE_ID}"
 
-# [7/7] Launch Owner Flutter application
-OWNER_API_BASE_URL="${OWNER_API_BASE_URL:-http://10.0.2.2:8000}"
+API_BASE_URL="${API_BASE_URL:-${OWNER_API_BASE_URL:-http://10.0.2.2:8000}}"
 
-if [[ "$DEVICE_ID" != *"emulator"* ]] && [[ "$OWNER_API_BASE_URL" == "http://10.0.2.2:8000" ]]; then
+if [[ "$DEVICE_ID" != *"emulator"* ]] && [[ "$API_BASE_URL" == "http://10.0.2.2:8000" ]]; then
     echo "WARNING: Target device '${DEVICE_ID}' appears to be physical hardware."
     echo "  10.0.2.2 is valid for Android Emulator host loopback."
-    echo "  For physical devices, set OWNER_API_BASE_URL to your LAN IP (e.g. OWNER_API_BASE_URL=http://192.168.1.50:8000 ./start.sh)"
+    echo "  For physical devices, set API_BASE_URL to your LAN IP (e.g. API_BASE_URL=http://192.168.1.50:8000 ./start.sh ${TARGET_APP})"
 fi
 
+echo "[3/3] Launching ${TARGET_APP} Mobile App..."
+echo "  - Target App:   ${TARGET_APP}"
+echo "  - Device:       ${DEVICE_ID}"
+echo "  - API Base:     ${API_BASE_URL}"
 echo ""
-echo "=================================================="
-echo " Lending Nelson V2 Ready!"
-echo " - Backend API:  http://127.0.0.1:8000/api/v1"
-echo " - Health Probe: http://127.0.0.1:8000/health/ready"
-echo " - Target Device: ${DEVICE_ID}"
-echo " - App API Base:  ${OWNER_API_BASE_URL}"
-echo "=================================================="
-echo "Launching Owner Mobile App..."
 
-# Disable trap for normal foreground Flutter session so Ctrl+C gracefully closes app
-trap - EXIT INT TERM
-
-cd "$OWNER_APP_DIR"
-run_flutter run -d "$DEVICE_ID" "--dart-define=API_BASE_URL=${OWNER_API_BASE_URL}"
+cd "$APP_LAUNCH_DIR"
+run_flutter run -d "$DEVICE_ID" "--dart-define=API_BASE_URL=${API_BASE_URL}"

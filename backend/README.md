@@ -22,18 +22,30 @@ local development database.
 ## Run and verify
 
 ```bash
-./start.sh
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+./start.sh backend
 pytest
 ruff check .
 ruff format --check .
 mypy app
-./verify.sh
 ```
 
-Running `./start.sh` from the repository root validates the environment, applies Alembic migrations, launches the backend service on port 8000, checks PostgreSQL readiness, and launches the Owner Flutter application on the Android emulator. Override `OWNER_API_BASE_URL` for physical devices:
+Running `./start.sh backend` from the repository root validates the backend environment, applies Alembic migrations, and launches the FastAPI service in the foreground on port 8000.
+
+In separate terminals, launch the mobile clients:
+
 ```bash
-OWNER_API_BASE_URL=http://192.168.1.50:8000 ./start.sh
+# Terminal 2: Owner Mobile App
+./start.sh owner
+
+# Terminal 3: Borrower Mobile App
+./start.sh borrower
+```
+
+To target a specific emulator/device or override the API URL for physical hardware:
+
+```bash
+FLUTTER_DEVICE_ID=emulator-5554 ./start.sh owner
+API_BASE_URL=http://<LAN-IP>:8000 ./start.sh borrower
 ```
 
 `GET /health/live` proves that the API process can answer without contacting PostgreSQL.
