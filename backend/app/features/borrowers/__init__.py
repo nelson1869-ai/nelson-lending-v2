@@ -1,5 +1,6 @@
 """Borrower records and isolated Borrower App account persistence."""
 
+from app.features.borrowers.activation_models import BorrowerActivationCode
 from app.features.borrowers.models import (
     Borrower,
     BorrowerAccount,
@@ -11,6 +12,7 @@ from app.features.borrowers.registration_models import BorrowerRegistration
 __all__ = [
     "Borrower",
     "BorrowerAccount",
+    "BorrowerActivationCode",
     "BorrowerDevice",
     "BorrowerRefreshToken",
     "BorrowerRegistration",

@@ -1,5 +1,6 @@
 """ORM model registry used by Alembic metadata discovery."""
 
+from app.features.borrowers.activation_models import BorrowerActivationCode
 from app.features.borrowers.models import (
     Borrower,
     BorrowerAccount,
@@ -17,6 +18,7 @@ MODEL_REGISTRY = (
     BorrowerAccount,
     BorrowerDevice,
     BorrowerRefreshToken,
+    BorrowerActivationCode,
     BorrowerRegistration,
     BusinessSetting,
 )
