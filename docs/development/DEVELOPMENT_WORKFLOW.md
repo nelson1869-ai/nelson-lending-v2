@@ -204,6 +204,19 @@ copy manual or production borrower PII into tests or logs. Approval means the bu
 recognized and the app account is approved but still not activated; M06 owns activation secrets,
 PIN setup, and Borrower sessions.
 
+M06 tests activation and authentication against the dedicated local PostgreSQL test database:
+
+```bash
+.venv/bin/python -m pytest tests/test_borrower_security.py
+.venv/bin/python -m pytest tests/integration/test_borrower_auth.py -v
+```
+
+Test fixtures use synthetic PINs, codes, devices, phones, and borrower identities. Never copy
+runtime credentials or PII into source or logs. Migration verification must cover
+`0004 → 0003 → 0004` plus a fresh test-database chain through `0004`; leave development and test
+databases at head. Activation attempt limiting protects the short code, but distributed PIN-login
+throttling remains a later production-hardening concern.
+
 ### Local PostgreSQL workflow
 
 M03 uses PostgreSQL only on `127.0.0.1:5432`, with `lending_nelson_v2` for development and the

@@ -8,6 +8,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LOCAL_DATABASE_URL = "postgresql+asyncpg://lending_v2:lending_v2@127.0.0.1:5432/lending_nelson_v2"
 LOCAL_JWT_SECRET = "change-me-for-local-development-use-a-random-secret"
+LOCAL_ACTIVATION_SECRET = "change-me-for-local-activation-code-hmac"
+LOCAL_DEVICE_SECRET = "change-me-for-local-device-identifier-hmac"
 
 
 class Settings(BaseSettings):
@@ -30,6 +32,12 @@ class Settings(BaseSettings):
     jwt_algorithm: Literal["HS256"] = "HS256"
     owner_access_token_minutes: int = 15
     owner_refresh_token_days: int = 30
+    borrower_activation_code_secret: str = LOCAL_ACTIVATION_SECRET
+    borrower_activation_code_minutes: int = 15
+    borrower_activation_code_max_attempts: int = 5
+    borrower_access_token_minutes: int = 15
+    borrower_refresh_token_days: int = 30
+    device_identifier_secret: str = LOCAL_DEVICE_SECRET
 
     @field_validator("api_v1_prefix")
     @classmethod
@@ -58,10 +66,30 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "JWT_SECRET_KEY must be an explicit random secret of at least 32 characters"
                 )
+            if (
+                self.borrower_activation_code_secret == LOCAL_ACTIVATION_SECRET
+                or len(self.borrower_activation_code_secret) < 32
+            ):
+                raise ValueError(
+                    "BORROWER_ACTIVATION_CODE_SECRET must be an explicit random secret"
+                )
+            if (
+                self.device_identifier_secret == LOCAL_DEVICE_SECRET
+                or len(self.device_identifier_secret) < 32
+            ):
+                raise ValueError("DEVICE_IDENTIFIER_SECRET must be an explicit random secret")
         if self.owner_access_token_minutes < 1:
             raise ValueError("OWNER_ACCESS_TOKEN_MINUTES must be positive")
         if self.owner_refresh_token_days < 1:
             raise ValueError("OWNER_REFRESH_TOKEN_DAYS must be positive")
+        if self.borrower_activation_code_minutes < 1:
+            raise ValueError("BORROWER_ACTIVATION_CODE_MINUTES must be positive")
+        if self.borrower_activation_code_max_attempts < 1:
+            raise ValueError("BORROWER_ACTIVATION_CODE_MAX_ATTEMPTS must be positive")
+        if self.borrower_access_token_minutes < 1:
+            raise ValueError("BORROWER_ACCESS_TOKEN_MINUTES must be positive")
+        if self.borrower_refresh_token_days < 1:
+            raise ValueError("BORROWER_REFRESH_TOKEN_DAYS must be positive")
         return self
 
 

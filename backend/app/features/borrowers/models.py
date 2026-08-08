@@ -222,6 +222,11 @@ class BorrowerRefreshToken(Base):
     token_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    rotated_to_token_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("borrower_refresh_tokens.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -236,4 +241,8 @@ class BorrowerRefreshToken(Base):
         back_populates="refresh_tokens",
         primaryjoin="BorrowerDevice.id == BorrowerRefreshToken.device_id",
         viewonly=True,
+    )
+    rotated_to_token: Mapped["BorrowerRefreshToken | None"] = relationship(
+        remote_side="BorrowerRefreshToken.id",
+        foreign_keys=[rotated_to_token_id],
     )
