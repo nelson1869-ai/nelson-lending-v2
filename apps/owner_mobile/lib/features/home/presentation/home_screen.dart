@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../accounting/presentation/owner_accounting_screen.dart';
 import '../../auth/data/owner_auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../loan_requests/presentation/owner_loan_requests_list_screen.dart';
@@ -174,6 +175,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       icon: const Icon(Icons.assignment),
                       label: const Text('Manage Loan Contracts'),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const OwnerAccountingScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        backgroundColor: theme.colorScheme.tertiaryContainer,
+                        foregroundColor: theme.colorScheme.onTertiaryContainer,
+                      ),
+                      icon: const Icon(Icons.account_balance),
+                      label: const Text('Double-Entry Accounting & Ledger'),
                     ),
                   ],
                 ),
