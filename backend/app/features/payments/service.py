@@ -1,14 +1,16 @@
-"""Payment domain service enforcing atomic allocation and loan status updates."""
+"""Payment domain service enforcing atomic allocation and contractual accrual."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.loans.calculator import (
+    advance_due_date,
     allocate_payment,
     calculate_period_rate,
     quantize_money,
@@ -23,22 +25,7 @@ async def post_payment(
     loan_id: UUID,
     payload: PaymentPostRequest,
 ) -> tuple[Payment, bool]:
-    """Atomically record a payment against an active loan and update balances.
-
-    Returns ``(payment, was_replayed)`` where ``was_replayed`` is ``True`` when an
-    existing payment was returned due to a matching idempotency key.
-
-    Sequence:
-    1. Lock Loan row using SELECT ... FOR UPDATE.
-    2. Verify loan status (must be active or defaulted).
-    3. If idempotency_key supplied, check for a prior identical or conflicting payment.
-    4. Accumulate new-period interest onto loan.accrued_interest so partial prior
-       payments carry forward — do NOT recompute fresh full interest from scratch.
-    5. Allocate payment interest-first, then principal, then unapplied credit.
-    6. Persist Payment record (storing idempotency_key for replay detection).
-    7. Update Loan.outstanding_principal and Loan.accrued_interest.
-    8. If loan obligations are fully satisfied, transition Loan status to paid.
-    """
+    """Atomically record a payment against an active loan and update balances."""
     result = await session.execute(select(Loan).where(Loan.id == loan_id).with_for_update())
     loan = result.scalar_one_or_none()
 
@@ -55,7 +42,7 @@ async def post_payment(
         )
 
     # --- Idempotency check (before any mutation or status check for paid) ---
-    if payload.idempotency_key is not None:
+    if payload.idempotency_key is not None and payload.idempotency_key.strip():
         existing = await _find_idempotent_payment(session, loan_id, payload.idempotency_key)
         if existing is not None:
             # Verify the prior request matches; conflict → 409.
@@ -68,16 +55,60 @@ async def post_payment(
             detail="Loan is already paid in full.",
         )
 
-    # --- Accrued interest accumulation ---
-    # New period interest is based on the CURRENT outstanding principal (post prior reductions).
-    # It is added to whatever interest was left unpaid from previous partial payments.
+    # --- Payment Date Validation ---
+    today = date.today()
+    if payload.payment_date > today:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Payment date '{payload.payment_date}' cannot be in the future.",
+        )
+
+    if loan.disbursed_at is not None and payload.payment_date < loan.disbursed_at.date():
+        disbursed_date = loan.disbursed_at.date()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Payment date '{payload.payment_date}' cannot predate loan "
+                f"disbursement date '{disbursed_date}'."
+            ),
+        )
+
+    latest_payment_res = await session.execute(
+        select(Payment)
+        .where(Payment.loan_id == loan_id)
+        .order_by(Payment.payment_date.desc(), Payment.posted_at.desc())
+        .limit(1)
+    )
+    latest_payment = latest_payment_res.scalar_one_or_none()
+    if latest_payment is not None and payload.payment_date < latest_payment.payment_date:
+        last_date = latest_payment.payment_date
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Payment date '{payload.payment_date}' cannot be earlier than "
+                f"latest posted payment date '{last_date}'."
+            ),
+        )
+
+    # --- Contractual Accrual ---
+    if loan.next_interest_due_date is None:
+        loan.next_interest_due_date = loan.first_due_date
+
     period_rate = calculate_period_rate(loan.monthly_rate, loan.payment_frequency)
-    new_period_interest = quantize_money(loan.outstanding_principal * period_rate)
-    total_interest_due = quantize_money(loan.accrued_interest + new_period_interest)
+
+    # Accrue interest only for due contractual periods that have arrived relative to payment_date
+    while payload.payment_date >= loan.next_interest_due_date:
+        period_interest = quantize_money(loan.outstanding_principal * period_rate)
+        loan.accrued_interest = quantize_money(loan.accrued_interest + period_interest)
+        loan.next_interest_due_date = advance_due_date(
+            loan.next_interest_due_date,
+            loan.payment_frequency,
+            loan.first_due_date,
+        )
 
     allocation = allocate_payment(
         amount=payload.amount,
-        interest_due=total_interest_due,
+        interest_due=loan.accrued_interest,
         outstanding_principal=loan.outstanding_principal,
     )
 
@@ -111,7 +142,18 @@ async def post_payment(
         loan.status = "paid"
         loan.paid_at = now
 
-    await session.flush()
+    try:
+        await session.flush()
+    except IntegrityError as err:
+        # Handle concurrent requests with the exact same idempotency_key safely
+        if payload.idempotency_key is not None:
+            await session.rollback()
+            existing = await _find_idempotent_payment(session, loan_id, payload.idempotency_key)
+            if existing is not None:
+                _assert_idempotency_match(existing, payload)
+                return existing, True
+        raise err
+
     return payment, False
 
 
@@ -123,7 +165,7 @@ async def list_loan_payments(
     result = await session.execute(
         select(Payment)
         .where(Payment.loan_id == loan_id)
-        .order_by(Payment.posted_at.asc(), Payment.created_at.asc())
+        .order_by(Payment.payment_date.asc(), Payment.posted_at.asc(), Payment.id.asc())
     )
     return list(result.scalars().all())
 
@@ -149,15 +191,7 @@ async def _find_idempotent_payment(
 
 
 def _assert_idempotency_match(existing: Payment, payload: PaymentPostRequest) -> None:
-    """Raise HTTP 409 if the retry payload conflicts with the original payment.
-
-    Two fields are compared because they are the financially material inputs that
-    the idempotency guarantee protects:
-    - amount: the money posted
-    - payment_date: the effective date recorded on the payment
-
-    reference, note, and idempotency_key itself are deliberately excluded.
-    """
+    """Raise HTTP 409 if the retry payload conflicts with the original payment."""
     conflicts: list[str] = []
     if quantize_money(payload.amount) != existing.amount:
         conflicts.append(
@@ -167,6 +201,10 @@ def _assert_idempotency_match(existing: Payment, payload: PaymentPostRequest) ->
         conflicts.append(
             f"payment_date: existing={existing.payment_date}, requested={payload.payment_date}"
         )
+    if payload.reference != existing.reference:
+        conflicts.append(f"reference: existing={existing.reference}, requested={payload.reference}")
+    if payload.note != existing.note:
+        conflicts.append(f"note: existing={existing.note}, requested={payload.note}")
     if conflicts:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

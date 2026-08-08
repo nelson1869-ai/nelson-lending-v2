@@ -3,7 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -30,7 +30,6 @@ DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
 @owner_router.post(
     "/loans/{loan_id}/payments",
     response_model=PaymentResponse,
-    # FastAPI default for the decorator; actual status code is set dynamically below.
     status_code=status.HTTP_201_CREATED,
     summary="Post payment against active loan (Owner only)",
 )
@@ -40,12 +39,22 @@ async def owner_post_payment(
     _current_owner: CurrentOwner,
     db: DatabaseSession,
     response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> PaymentResponse:
     """Record a received payment and atomically allocate interest and principal.
 
+    Requires an Idempotency-Key header for financial posting safety.
     Returns HTTP 201 for a newly created payment, or HTTP 200 when the request is
     an idempotent replay of an existing payment (same idempotency key + same payload).
     """
+    effective_key = (idempotency_key or payload.idempotency_key or "").strip()
+    if not effective_key:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Idempotency-Key header is required for payment posting.",
+        )
+
+    payload.idempotency_key = effective_key
     payment, was_replayed = await post_payment(db, loan_id, payload)
     if was_replayed:
         response.status_code = status.HTTP_200_OK

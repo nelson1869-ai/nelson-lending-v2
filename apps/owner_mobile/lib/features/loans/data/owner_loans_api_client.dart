@@ -53,14 +53,22 @@ class OwnerLoansApiClient {
     required String paymentDate,
     String? reference,
     String? note,
+    String? idempotencyKey,
   }) async {
+    final key = idempotencyKey ??
+        'idem-${DateTime.now().microsecondsSinceEpoch}-${loanId.replaceAll('-', '').substring(0, 8)}';
     final body = <String, dynamic>{
       'amount': amount,
       'paymentDate': paymentDate,
       if (reference != null && reference.isNotEmpty) 'reference': reference,
       if (note != null && note.isNotEmpty) 'note': note,
+      'idempotencyKey': key,
     };
-    final res = await _dio.post('/owner/loans/$loanId/payments', data: body);
+    final res = await _dio.post(
+      '/owner/loans/$loanId/payments',
+      data: body,
+      options: Options(headers: {'Idempotency-Key': key}),
+    );
     return OwnerPaymentModel.fromJson(res.data as Map<String, dynamic>);
   }
 
