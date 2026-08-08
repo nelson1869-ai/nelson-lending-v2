@@ -133,7 +133,7 @@ never force-pushed or merged without explicit review approval.
 
 ### M07 — Owner Flutter Application Foundation
 
-- **Status:** Not Started
+- **Status:** In Progress
 - **Branch:** `feature/m07-owner-flutter-foundation`
 - **Goal:** Establish the separate Owner mobile client and connect it securely to the backend.
 - **Topics to Learn:** Flutter architecture; Riverpod; Dio; GoRouter; secure storage; API integration; Owner session handling.
