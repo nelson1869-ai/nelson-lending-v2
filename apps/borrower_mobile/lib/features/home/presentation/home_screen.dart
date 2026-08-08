@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../loan_requests/presentation/loan_request_form_screen.dart';
 import '../../loan_requests/presentation/loan_requests_list_screen.dart';
+import '../../loans/presentation/borrower_loans_list_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -192,6 +193,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const BorrowerLoansListScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.account_balance),
+                          label: const Text('My Loan Contracts'),
+                        ),
                       ),
                     ],
                   ),
