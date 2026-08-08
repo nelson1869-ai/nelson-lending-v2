@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../loan_requests/presentation/loan_request_form_screen.dart';
+import '../../loan_requests/presentation/loan_requests_list_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -141,6 +143,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           'Borrower ID', profile?.borrowerId ?? 'N/A'),
                       const SizedBox(height: 12),
                       _buildInfoRow('Account ID', profile?.accountId ?? 'N/A'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Loan Actions',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const LoanRequestFormScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add_card),
+                              label: const Text('Apply for Loan'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const LoanRequestsListScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.list_alt),
+                              label: const Text('My Requests'),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
