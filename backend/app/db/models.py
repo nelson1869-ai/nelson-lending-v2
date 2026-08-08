@@ -1,5 +1,6 @@
 """ORM model registry used by Alembic metadata discovery."""
 
+from app.features.accounting.models import Account, JournalEntry, JournalTransaction
 from app.features.borrowers.activation_models import BorrowerActivationCode
 from app.features.borrowers.models import (
     Borrower,
@@ -27,4 +28,7 @@ MODEL_REGISTRY = (
     Loan,
     LoanRequest,
     Payment,
+    Account,
+    JournalTransaction,
+    JournalEntry,
 )
