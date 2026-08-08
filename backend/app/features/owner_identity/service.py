@@ -24,6 +24,7 @@ from app.features.owner_identity.exceptions import (
 from app.features.owner_identity.models import OwnerRefreshToken, OwnerUser
 
 _BOOTSTRAP_ADVISORY_LOCK = 4_004_001
+_DUMMY_PASSWORD_HASH = hash_password("nonexistent owner timing password")
 
 
 @dataclass(frozen=True)
@@ -97,7 +98,7 @@ async def login_owner(
         )
         if owner is None:
             # Perform an Argon2 verification-equivalent path without exposing which check failed.
-            verify_password(password, hash_password("nonexistent owner timing password"))
+            verify_password(password, _DUMMY_PASSWORD_HASH)
             raise _authentication_failed()
         if not owner.is_active or not verify_password(password, owner.password_hash):
             raise _authentication_failed()
