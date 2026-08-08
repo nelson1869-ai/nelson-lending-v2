@@ -41,21 +41,21 @@ never force-pushed or merged without explicit review approval.
 
 ### M02 — Backend Foundation
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m02-backend-foundation`
 - **Goal:** Establish a minimal, testable FastAPI backend and its development toolchain.
 - **Topics to Learn:** Python project structure; FastAPI; Pydantic Settings; dependency management; async SQLAlchemy; pytest; Ruff; mypy; health checks.
 - **Concepts Learned:** Python 3.12 packaging with editable development installs; environment-backed settings; application factories; async SQLAlchemy engine/session lifecycles; deterministic constraint naming; Decimal-backed PostgreSQL types; liveness versus dependency-aware readiness; async HTTP unit tests; async Alembic configuration; layered local quality gates.
 - **Deliverables:** Added the backend package scaffold, safe configuration template, FastAPI application factory and route composition, async SQLAlchemy session foundation, canonical money/rate types, liveness and readiness endpoints, async Alembic environment with no revisions, baseline tests, executable verification script, and learner setup documentation. Business features remain deferred.
 - **Tests / Quality Gates:** `Backend import OK`; pytest 5 passed; Ruff lint passed; Ruff format check passed for 19 files; mypy passed for 13 application source files; `alembic heads` succeeded with no revisions; live Uvicorn smoke test returned 200 for liveness and a sanitized 503 for readiness without PostgreSQL.
-- **Educational Commits:**
+- **Completion Commits:**
   - `a0d83ad` — `chore(backend): establish python project tooling`
   - `93309b6` — `feat(backend): add api and database infrastructure`
   - `5d27975` — `test(backend): add foundation quality gates`
   - `a492030` — `docs: mark m02 ready for review`
-- **Completion Commit:** Pending review and merge
-- **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Import-time engine construction is lazy and does not connect to PostgreSQL. Request sessions never auto-commit, leaving transaction ownership to future domain services. Readiness can be unit-tested with a replaced probe while its live behavior still reports the real database state safely. CORS remains deferred until a web client can supply explicit allowed origins. M02 has no schema migration or business model.
+  - `28a76ad` — `chore(backend): finalize m02 review hygiene`
+- **Merge Commit:** `2e0bfb577ce83544744254540ac96dac9bdf4a07` — `merge: complete m02 backend foundation`
+- **Notes / Lessons Learned:** `pyproject.toml` centralizes Python packaging and pytest, Ruff, and mypy configuration. The FastAPI application factory composes routes without connecting during import; Pydantic Settings owns environment configuration; and the async SQLAlchemy engine/session foundation leaves transaction ownership explicit for future domain services. Alembic shares application settings and metadata while M02 intentionally has no revisions. Liveness checks process availability, readiness checks PostgreSQL, and mocked infrastructure tests remain distinct from real integration tests. Feature-branch review followed by a two-parent `--no-ff` merge preserves the complete milestone history. CORS remains deferred until a web client can supply explicit allowed origins. M02 has no schema migration or business model.
 
 ### M03 — PostgreSQL & Database Foundation
 
