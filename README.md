@@ -1,11 +1,11 @@
 # Lending Nelson V2
 
-> **Status: M04 — Secure Owner Authentication**
+> **Status: M05 — Borrower Registration & Owner Approval Foundation**
 
 Lending Nelson V2 is a production-quality lending platform in incremental development and a
-structured full-stack learning journey. M04 adds secure one-time Owner bootstrap, Argon2id
-credentials, short-lived Owner access JWTs, and rotated hashed refresh sessions. Borrower
-authentication and lending behavior remain future milestones.
+structured full-stack learning journey. M05 adds privacy-conscious public Borrower registration
+and transactional Owner approval or rejection. Approved records create a business Borrower and a
+pre-activation Borrower App account; activation, login, and lending remain future milestones.
 
 The target system has four core components:
 

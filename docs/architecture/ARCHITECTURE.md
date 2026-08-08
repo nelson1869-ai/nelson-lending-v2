@@ -70,6 +70,19 @@ flowchart TB
 - Borrower authentication remains a separate future M06 boundary and cannot use Owner claims or
   dependencies.
 
+M05 establishes the registration boundary without authenticating a Borrower:
+
+```text
+Public registration → pending BorrowerRegistration → Owner review
+                                                ↙ approved      ↘ rejected
+                              Borrower(active) + BorrowerAccount(approved)
+```
+
+Approval and rejection lock the registration row and own one database transaction. Approval
+creates and links both identity records before marking the request approved; failure rolls back all
+three changes. The resulting account has no PIN and cannot authenticate. Review metadata provides
+durable basic traceability while a formal audit subsystem remains deferred.
+
 ## 4. Target Monorepo Structure
 
 The intended structure is documented now and created only when its milestone begins:

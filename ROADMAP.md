@@ -97,15 +97,20 @@ never force-pushed or merged without explicit review approval.
 
 ### M05 — Borrower Registration
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m05-borrower-registration`
 - **Goal:** Build a validated public registration workflow controlled by Owner approval.
 - **Topics to Learn:** Public input boundaries; Owner approval; validation; phone normalization; duplicate protection; activation-code lifecycle design.
-- **Deliverables:** Registration request model and APIs; canonical phone handling; Owner review flow; duplicate-pending protection.
-- **Tests / Quality Gates:** Input validation; normalization cases; uniqueness/race handling; Owner-only review; rejection and approval transitions.
-- **Completion Commit:** Pending
+- **Deliverables:** Added a dedicated pending registration model and reversible migration; canonical Philippine mobile and national-ID normalization; privacy-preserving public submission; authenticated Owner list/detail review APIs; row-locked atomic approval/rejection; resulting Borrower linkage; and pre-activation BorrowerAccount creation with a null PIN.
+- **Tests / Quality Gates:** FastAPI import passed; full pytest 85 passed; real PostgreSQL integration suite 56 passed with 29 deselected; Ruff lint passed; Ruff format checked 50 files; mypy passed 33 application files; `0003_borrower_registrations` is current/head; Alembic reports no drift; test DB fresh install through 0001/0002/0003 passed; real concurrent approval and forced rollback tests passed; redacted local approve/reject API smoke passed.
+- **Educational Commits:**
+  - `9205f2f` — `feat(borrowers): add registration domain model`
+  - `78d4474` — `feat(borrowers): add public registration workflow`
+  - `f0f303b` — `feat(borrowers): add owner registration review workflow`
+  - `483929b` — `test(borrowers): cover registration and approval lifecycle`
+- **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Notes / Lessons Learned:** Borrower registration is a public request, not an authenticated Borrower identity. Partial unique indexes protect concurrent pending national-ID and phone submissions, while services also reject identities already present in Borrower or BorrowerAccount. Owner review reuses the canonical Owner dependency; `SELECT FOR UPDATE`, terminal-state checks, and database uniqueness make approval effectively single-use. Approval creates `Borrower(active)` and `BorrowerAccount(approved, pin_hash=NULL)` atomically, while rejection creates neither. Approval remains deliberately distinct from M06 activation and login.
 
 ### M06 — Borrower Authentication & Activation
 

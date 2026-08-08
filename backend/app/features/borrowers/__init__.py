@@ -6,5 +6,12 @@ from app.features.borrowers.models import (
     BorrowerDevice,
     BorrowerRefreshToken,
 )
+from app.features.borrowers.registration_models import BorrowerRegistration
 
-__all__ = ["Borrower", "BorrowerAccount", "BorrowerDevice", "BorrowerRefreshToken"]
+__all__ = [
+    "Borrower",
+    "BorrowerAccount",
+    "BorrowerDevice",
+    "BorrowerRefreshToken",
+    "BorrowerRegistration",
+]

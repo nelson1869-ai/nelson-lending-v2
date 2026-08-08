@@ -190,6 +190,20 @@ database dependency and continue to use the guarded `lending_nelson_v2_test` dat
 limiting remains a production-hardening decision rather than introducing Redis or a misleading
 single-process limiter in M04.
 
+M05 adds canonical Philippine mobile normalization, public registration validation, and real
+PostgreSQL tests for pending uniqueness, Owner authorization, terminal decisions, transactional
+rollback, and concurrent approval:
+
+```bash
+.venv/bin/python -m pytest tests/test_registration_validation.py
+.venv/bin/python -m pytest tests/integration/test_borrower_registration.py -v
+```
+
+Registration fixtures use obviously synthetic national IDs, phones, names, and addresses. Never
+copy manual or production borrower PII into tests or logs. Approval means the business identity is
+recognized and the app account is approved but still not activated; M06 owns activation secrets,
+PIN setup, and Borrower sessions.
+
 ### Local PostgreSQL workflow
 
 M03 uses PostgreSQL only on `127.0.0.1:5432`, with `lending_nelson_v2` for development and the
