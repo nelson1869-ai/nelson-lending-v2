@@ -37,7 +37,7 @@ def test_regression_canonical_2000_at_10_percent() -> None:
 
 
 def test_regression_schedule_closing_and_principal_sum() -> None:
-    """Verify that schedule principal sum equals original principal and closing principal is 0.00."""
+    """Verify schedule principal sum equals original principal and closing principal is 0.00."""
     quote = calculate_quote(
         principal=Decimal("15000.00"),
         monthly_rate=Decimal("0.075"),

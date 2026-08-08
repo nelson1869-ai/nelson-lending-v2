@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Final
+from typing import TYPE_CHECKING, Final
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -20,6 +20,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.db.mixins import TimestampMixin
 from app.db.types import MONEY_SQL_TYPE, RATE_SQL_TYPE
+
+if TYPE_CHECKING:
+    from app.features.borrowers.models import Borrower
 
 LOAN_STATUSES: Final = ("draft", "approved", "active", "paid", "cancelled", "defaulted")
 PAYMENT_FREQUENCIES: Final = ("monthly", "twice_monthly")

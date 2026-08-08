@@ -7,10 +7,8 @@ import pytest
 
 from app.features.loans.calculator import (
     build_due_dates,
-    calculate_period_rate,
     calculate_quote,
     quantize_money,
-    quantize_rate,
 )
 
 

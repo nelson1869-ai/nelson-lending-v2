@@ -176,15 +176,21 @@ never force-pushed or merged without explicit review approval.
 
 ### M09 — Loan Domain & Calculator
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m09-loan-domain-calculator`
 - **Goal:** Implement the canonical Flexible Reducing-Balance model and calendar-safe schedules.
 - **Topics to Learn:** Financial `Decimal` arithmetic; reducing balance; interest; Monthly and Twice-a-Month schedules; calendar-safe dates; quotes; regression tests.
-- **Deliverables:** Canonical loan calculator; quote service; Monthly schedules; Twice-a-Month schedules on the 15th and last calendar day; domain tests.
-- **Tests / Quality Gates:** Exact Decimal examples; rounding; month-end/leap-year cases; unsupported-model/frequency rejection; no client-authoritative calculations.
-- **Completion Commit:** Pending
+- **Deliverables:** Loan domain model & `0005_loans` migration; canonical Flexible Reducing-Balance calculator; pure flexible payment allocation rules; Owner loan quote API (`POST /api/v1/owner/loans/quote`); financial unit & integration regression tests.
+- **Tests / Quality Gates:** `Backend import OK`; full pytest 136 passed (unit + integration); Ruff lint passed; Ruff format checked 64 files; mypy passed 42 application source files; `0005_loans` current/head; Alembic drift check clean; Owner & Borrower Flutter apps regression clean.
+- **Educational Commits:**
+  - `3d7b34a` — `feat(loans): add loan domain persistence`
+  - `9bc29a7` — `feat(loans): implement reducing balance calculator`
+  - `8720254` — `feat(loans): add flexible payment allocation rules`
+  - `bb7ed9f` — `feat(loans): expose owner loan quote api`
+  - `0811d3d` — `test(loans): cover financial calculator regressions`
+- **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Only Flexible Reducing-Balance is supported; no Interest-Only, flat-interest, balloon, fixed-principal, or Weekly modes.
+- **Notes / Lessons Learned:** The backend is the sole authoritative calculator for loans. New V2 loans support exclusively the Flexible Reducing-Balance model with Monthly or Twice-a-Month (15th and month-end) payment frequencies. All financial arithmetic uses Python `Decimal` with explicit `ROUND_HALF_UP` centavo quantization. Monthly schedules handle month-end re-expansion (e.g. Jan 31 -> Feb 28 -> Mar 31) and leap years deterministically. The payment allocation function allocates accepted payments interest-first, then principal, with any excess recorded as unapplied credit; future interest is calculated strictly on the reduced outstanding principal. The Owner loan quote API is stateless and does not persist loan records.
 
 ### M10 — Borrower Loan Requests
 

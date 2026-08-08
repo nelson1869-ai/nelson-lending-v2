@@ -5,43 +5,42 @@ from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 from app.features.loans.calculator import LoanQuote, ScheduleItem
 
 
-class LoanQuoteRequest(BaseModel):
+class LoanSchema(BaseModel):
+    """Base schema using mobile-friendly camelCase JSON aliases."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+
+class LoanQuoteRequest(LoanSchema):
     """Stateless loan quote calculation request."""
 
-    model_config = ConfigDict(populate_by_name=True)
-
     principal: Decimal = Field(..., gt=0, description="Original loan principal in PHP")
-    monthly_rate: Decimal = Field(
-        ..., ge=0, alias="monthlyRate", description="Contractual monthly interest rate"
-    )
-    term_months: int = Field(..., gt=0, alias="termMonths", description="Loan term in months")
+    monthly_rate: Decimal = Field(..., ge=0, description="Contractual monthly interest rate")
+    term_months: int = Field(..., gt=0, description="Loan term in months")
     payment_frequency: Literal["monthly", "twice_monthly"] = Field(
-        ..., alias="paymentFrequency", description="Payment frequency"
+        ..., description="Payment frequency"
     )
-    first_due_date: date = Field(
-        ..., alias="firstDueDate", description="Date of first scheduled payment"
-    )
+    first_due_date: date = Field(..., description="Date of first scheduled payment")
 
 
-class ScheduleItemResponse(BaseModel):
+class ScheduleItemResponse(LoanSchema):
     """Single installment item in calculated schedule."""
 
-    model_config = ConfigDict(populate_by_name=True)
-
-    installment_number: int = Field(..., alias="installmentNumber")
-    due_date: date = Field(..., alias="dueDate")
-    opening_principal: Decimal = Field(..., alias="openingPrincipal")
-    interest_due: Decimal = Field(..., alias="interestDue")
-    scheduled_principal: Decimal = Field(..., alias="scheduledPrincipal")
-    scheduled_payment: Decimal = Field(..., alias="scheduledPayment")
-    closing_principal: Decimal = Field(..., alias="closingPrincipal")
+    installment_number: int
+    due_date: date
+    opening_principal: Decimal
+    interest_due: Decimal
+    scheduled_principal: Decimal
+    scheduled_payment: Decimal
+    closing_principal: Decimal
 
     @classmethod
-    from_domain(cls, item: ScheduleItem) -> "ScheduleItemResponse":
+    def from_domain(cls, item: ScheduleItem) -> "ScheduleItemResponse":
         return cls(
             installment_number=item.installment_number,
             due_date=item.due_date,
@@ -53,26 +52,24 @@ class ScheduleItemResponse(BaseModel):
         )
 
 
-class LoanQuoteResponse(BaseModel):
+class LoanQuoteResponse(LoanSchema):
     """Stateless loan quote calculation response."""
 
-    model_config = ConfigDict(populate_by_name=True)
-
     principal: Decimal
-    monthly_rate: Decimal = Field(..., alias="monthlyRate")
-    term_months: int = Field(..., alias="termMonths")
-    payment_frequency: str = Field(..., alias="paymentFrequency")
-    number_of_payments: int = Field(..., alias="numberOfPayments")
-    period_rate: Decimal = Field(..., alias="periodRate")
-    scheduled_payment: Decimal = Field(..., alias="scheduledPayment")
-    total_scheduled_interest: Decimal = Field(..., alias="totalScheduledInterest")
-    total_scheduled_repayment: Decimal = Field(..., alias="totalScheduledRepayment")
-    first_due_date: date = Field(..., alias="firstDueDate")
-    final_due_date: date = Field(..., alias="finalDueDate")
+    monthly_rate: Decimal
+    term_months: int
+    payment_frequency: str
+    number_of_payments: int
+    period_rate: Decimal
+    scheduled_payment: Decimal
+    total_scheduled_interest: Decimal
+    total_scheduled_repayment: Decimal
+    first_due_date: date
+    final_due_date: date
     schedule: list[ScheduleItemResponse]
 
     @classmethod
-    from_domain(cls, quote: LoanQuote) -> "LoanQuoteResponse":
+    def from_domain(cls, quote: LoanQuote) -> "LoanQuoteResponse":
         return cls(
             principal=quote.principal,
             monthly_rate=quote.monthly_rate,
