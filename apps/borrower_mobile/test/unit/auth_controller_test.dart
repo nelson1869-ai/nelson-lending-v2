@@ -114,4 +114,19 @@ void main() {
     expect(controller.state.status, equals(AuthStatus.unauthenticated));
     verify(() => mockStorage.clearAll()).called(1);
   });
+
+  test('failed remote logout still clears local borrower session', () async {
+    controller.state = const AuthState.authenticated(dummyProfile);
+    when(() => mockStorage.getRefreshToken())
+        .thenAnswer((_) async => 'session_token');
+    when(() => mockRepo.logout('session_token'))
+        .thenThrow(Exception('Backend unavailable'));
+    when(() => mockStorage.clearAll()).thenAnswer((_) async {});
+
+    await controller.logout();
+
+    expect(controller.state.status, equals(AuthStatus.unauthenticated));
+    expect(controller.state.borrower, isNull);
+    verify(() => mockStorage.clearAll()).called(1);
+  });
 }

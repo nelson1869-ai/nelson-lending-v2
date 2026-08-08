@@ -87,12 +87,17 @@ class AuthController extends StateNotifier<AuthState> {
 
   /// Revokes refresh session and clears local tokens.
   Future<void> logout() async {
-    final refreshToken = await _tokenStorage.getRefreshToken();
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _repository.logout(refreshToken);
+    try {
+      final refreshToken = await _tokenStorage.getRefreshToken();
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await _repository.logout(refreshToken);
+      }
+    } catch (_) {
+      // Remote revocation is best effort. Local logout must always succeed.
+    } finally {
+      await _tokenStorage.clearAll();
+      state = const AuthState.unauthenticated();
     }
-    await _tokenStorage.clearAll();
-    state = const AuthState.unauthenticated();
   }
 }
 
