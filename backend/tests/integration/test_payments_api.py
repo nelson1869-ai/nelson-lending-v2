@@ -1,43 +1,24 @@
 """Integration tests for payment posting, canonical allocation, and history endpoints."""
 
 import asyncio
-from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.security import create_owner_access_token, hash_password
-from app.db.session import get_db
 from app.features.borrowers.auth_security import create_borrower_access_token, hash_pin
 from app.features.borrowers.models import Borrower, BorrowerAccount
 from app.features.loan_requests.models import LoanRequest
 from app.features.loans.models import Loan
 from app.features.owner_identity.models import OwnerUser
 from app.features.payments.models import Payment
-from app.main import app
 
 pytestmark = pytest.mark.integration
-
-
-@pytest.fixture
-async def api_client(db_session: AsyncSession) -> AsyncIterator[AsyncClient]:
-    """Provide an AsyncClient wired directly to the test db_session."""
-
-    async def override_get_db() -> AsyncIterator[AsyncSession]:
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
-    transport = ASGITransport(app=app)
-    try:
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            yield client
-    finally:
-        app.dependency_overrides.pop(get_db, None)
 
 
 async def setup_owner_and_headers(session: AsyncSession) -> dict[str, str]:
@@ -121,6 +102,7 @@ async def setup_active_loan(
         final_due_date=date(2026, 9, 15),
         status=status,
         disbursed_at=datetime.now(UTC) if status == "active" else None,
+        accrued_interest=Decimal("0.00"),
     )
     session.add(loan)
     await session.flush()

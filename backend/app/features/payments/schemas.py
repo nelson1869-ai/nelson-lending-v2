@@ -31,6 +31,15 @@ class PaymentPostRequest(BaseModel):
         max_length=500,
         description="Optional internal note recorded by Owner",
     )
+    idempotency_key: str | None = Field(
+        default=None,
+        max_length=128,
+        description=(
+            "Client-generated idempotency key. Retrying with the same key and identical "
+            "payload returns the original payment. Retrying with the same key but a "
+            "conflicting amount or date is rejected with HTTP 409."
+        ),
+    )
 
 
 class PaymentResponse(BaseModel):
@@ -50,6 +59,7 @@ class PaymentResponse(BaseModel):
     posted_at: datetime
     reference: str | None = None
     note: str | None = None
+    idempotency_key: str | None = None
     created_at: datetime
 
 
@@ -69,3 +79,4 @@ class BorrowerPaymentResponse(BaseModel):
     payment_date: date
     posted_at: datetime
     reference: str | None = None
+    idempotency_key: str | None = None

@@ -4,11 +4,14 @@ from collections.abc import AsyncIterator
 
 import pytest
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from app.core.config import Settings
+from app.db.session import get_db
+from app.main import app
 
 EXPECTED_TEST_DATABASE = "lending_nelson_v2_test"
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
@@ -62,3 +65,19 @@ async def db_session(integration_engine: AsyncEngine) -> AsyncIterator[AsyncSess
             await session.close()
             if transaction.is_active:
                 await transaction.rollback()
+
+
+@pytest_asyncio.fixture
+async def api_client(db_session: AsyncSession) -> AsyncIterator[AsyncClient]:
+    """Provide an AsyncClient wired directly to the test db_session."""
+
+    async def override_get_db() -> AsyncIterator[AsyncSession]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    transport = ASGITransport(app=app)
+    try:
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
+    finally:
+        app.dependency_overrides.pop(get_db, None)

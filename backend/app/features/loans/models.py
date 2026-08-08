@@ -102,6 +102,11 @@ class Loan(TimestampMixin, Base):
         MONEY_SQL_TYPE,
         nullable=False,
     )
+    accrued_interest: Mapped[Decimal] = mapped_column(
+        MONEY_SQL_TYPE,
+        nullable=False,
+        default=Decimal("0.00"),
+    )
     monthly_rate: Mapped[Decimal] = mapped_column(
         RATE_SQL_TYPE,
         nullable=False,

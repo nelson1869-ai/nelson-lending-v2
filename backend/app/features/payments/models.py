@@ -56,6 +56,13 @@ class Payment(TimestampMixin, Base):
         Index("ix_payments_loan_id", "loan_id"),
         Index("ix_payments_posted_at", "posted_at"),
         Index("ix_payments_payment_date", "payment_date"),
+        Index(
+            "uq_payments_loan_idempotency_key",
+            "loan_id",
+            "idempotency_key",
+            unique=True,
+            postgresql_where="idempotency_key IS NOT NULL",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -106,6 +113,10 @@ class Payment(TimestampMixin, Base):
     )
     note: Mapped[str | None] = mapped_column(
         String(500),
+        nullable=True,
+    )
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(128),
         nullable=True,
     )
 
