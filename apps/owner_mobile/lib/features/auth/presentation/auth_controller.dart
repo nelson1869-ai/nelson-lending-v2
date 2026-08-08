@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/storage/token_storage_service.dart';
 import '../data/owner_auth_repository.dart';
 import '../domain/auth_state.dart';
@@ -18,6 +19,12 @@ class AuthController extends StateNotifier<AuthState> {
 
   @override
   set state(AuthState value) => super.state = value;
+
+  /// Handles automatic session expiration triggered by API client refresh failure.
+  void handleSessionExpired() {
+    state = const AuthState.unauthenticated(
+        'Session expired. Please sign in again.');
+  }
 
   /// Attempts to restore existing session on startup.
   Future<void> restoreSession() async {
@@ -82,11 +89,14 @@ final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
   final repository = ref.watch(ownerAuthRepositoryProvider);
   final tokenStorage = ref.watch(tokenStorageProvider);
+  final apiClient = ref.watch(apiClientProvider);
 
   final controller = AuthController(
     repository: repository,
     tokenStorage: tokenStorage,
   );
+
+  apiClient.onSessionExpired = controller.handleSessionExpired;
 
   return controller;
 });
