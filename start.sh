@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Target selection (default: owner)
+TARGET_APP="${1:-owner}"
+
 # 1. Project paths resolution
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="${PROJECT_ROOT}/backend"
 OWNER_APP_DIR="${PROJECT_ROOT}/apps/owner_mobile"
+BORROWER_APP_DIR="${PROJECT_ROOT}/apps/borrower_mobile"
 PYTHON_BIN="${BACKEND_DIR}/.venv/bin/python"
 
 BACKEND_PID=""
@@ -35,6 +39,7 @@ run_flutter() {
 
 echo "=================================================="
 echo " Lending Nelson V2 — Local Development Launcher"
+echo " Target Application: ${TARGET_APP}"
 echo "=================================================="
 
 # [1/7] Validate environment
@@ -52,12 +57,22 @@ if [[ ! -f "${BACKEND_DIR}/alembic.ini" ]]; then
     exit 1
 fi
 
-if [[ ! -f "${OWNER_APP_DIR}/pubspec.yaml" ]]; then
-    echo "ERROR: Missing pubspec.yaml in ${OWNER_APP_DIR}"
+APP_LAUNCH_DIR=""
+if [[ "$TARGET_APP" == "owner" ]]; then
+    APP_LAUNCH_DIR="$OWNER_APP_DIR"
+elif [[ "$TARGET_APP" == "borrower" ]]; then
+    APP_LAUNCH_DIR="$BORROWER_APP_DIR"
+else
+    echo "ERROR: Invalid target application '${TARGET_APP}'. Expected 'owner' or 'borrower'."
     exit 1
 fi
 
-echo "✓ Environment validated."
+if [[ ! -f "${APP_LAUNCH_DIR}/pubspec.yaml" ]]; then
+    echo "ERROR: Missing pubspec.yaml in ${APP_LAUNCH_DIR}"
+    exit 1
+fi
+
+echo "✓ Environment validated for target app '${TARGET_APP}'."
 
 # [2/7] Stop existing backend process on port 8000
 echo "[2/7] Stopping previous backend instances on port 8000..."
@@ -176,27 +191,28 @@ fi
 
 echo "✓ Android device target ready: ${DEVICE_ID}"
 
-# [7/7] Launch Owner Flutter application
-OWNER_API_BASE_URL="${OWNER_API_BASE_URL:-http://10.0.2.2:8000}"
+# [7/7] Launch Flutter application
+API_BASE_URL="${OWNER_API_BASE_URL:-${API_BASE_URL:-http://10.0.2.2:8000}}"
 
-if [[ "$DEVICE_ID" != *"emulator"* ]] && [[ "$OWNER_API_BASE_URL" == "http://10.0.2.2:8000" ]]; then
+if [[ "$DEVICE_ID" != *"emulator"* ]] && [[ "$API_BASE_URL" == "http://10.0.2.2:8000" ]]; then
     echo "WARNING: Target device '${DEVICE_ID}' appears to be physical hardware."
     echo "  10.0.2.2 is valid for Android Emulator host loopback."
-    echo "  For physical devices, set OWNER_API_BASE_URL to your LAN IP (e.g. OWNER_API_BASE_URL=http://192.168.1.50:8000 ./start.sh)"
+    echo "  For physical devices, set API_BASE_URL to your LAN IP (e.g. API_BASE_URL=http://192.168.1.50:8000 ./start.sh ${TARGET_APP})"
 fi
 
 echo ""
 echo "=================================================="
 echo " Lending Nelson V2 Ready!"
+echo " - Target App:   ${TARGET_APP}"
 echo " - Backend API:  http://127.0.0.1:8000/api/v1"
 echo " - Health Probe: http://127.0.0.1:8000/health/ready"
 echo " - Target Device: ${DEVICE_ID}"
-echo " - App API Base:  ${OWNER_API_BASE_URL}"
+echo " - App API Base:  ${API_BASE_URL}"
 echo "=================================================="
-echo "Launching Owner Mobile App..."
+echo "Launching ${TARGET_APP} Mobile App..."
 
 # Disable trap for normal foreground Flutter session so Ctrl+C gracefully closes app
 trap - EXIT INT TERM
 
-cd "$OWNER_APP_DIR"
-run_flutter run -d "$DEVICE_ID" "--dart-define=API_BASE_URL=${OWNER_API_BASE_URL}"
+cd "$APP_LAUNCH_DIR"
+run_flutter run -d "$DEVICE_ID" "--dart-define=API_BASE_URL=${API_BASE_URL}"
