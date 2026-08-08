@@ -1,7 +1,8 @@
 # Lending Nelson V2 Backend
 
-M04 adds secure authentication for the one business Owner to the Python 3.12 FastAPI service.
-Borrower authentication, lending, payment, and accounting features remain deliberately deferred.
+M05 adds public Borrower registration and Owner-controlled approval/rejection to the Python 3.12
+FastAPI service. Borrower activation/authentication, lending, payment, and accounting remain
+deliberately deferred.
 
 ## Local setup in WSL
 
@@ -184,3 +185,47 @@ secret; passwords instead use salted Argon2id. Refresh rotates the session under
 the old token cannot be reused. Logout revokes the submitted refresh session; an already-issued
 access JWT remains valid only until its short expiration. Password recovery, MFA, distributed
 login throttling, and Borrower authentication are intentionally deferred.
+
+## Borrower registration and Owner review
+
+Public registration accepts names, a generic national ID, Philippine mobile number, address, and
+past date of birth. Mobile inputs `09XXXXXXXXX`, `639XXXXXXXXX`, and `+639XXXXXXXXX` normalize to
+`+639XXXXXXXXX`; national IDs are trimmed and uppercased. Duplicate pending or existing identities
+return a generic conflict without revealing another Borrower's information.
+
+```text
+POST /api/v1/borrower/registrations
+GET  /api/v1/owner/borrower-registrations?limit=50&offset=0
+GET  /api/v1/owner/borrower-registrations/<REGISTRATION_ID>
+POST /api/v1/owner/borrower-registrations/<REGISTRATION_ID>/approve
+POST /api/v1/owner/borrower-registrations/<REGISTRATION_ID>/reject
+```
+
+The four Owner endpoints require the existing Owner access token:
+
+```text
+Authorization: Bearer <OWNER_ACCESS_TOKEN>
+```
+
+Safe conceptual requests:
+
+```json
+{
+  "firstName": "Juan",
+  "lastName": "Dela Cruz",
+  "nationalId": "SYNTHETIC-ID-123",
+  "phoneNumber": "09171234567",
+  "address": "Bacolod City",
+  "dateOfBirth": "1995-05-10"
+}
+```
+
+```json
+{"reason": "Unable to verify submitted information."}
+```
+
+Approval locks the pending request and atomically creates `Borrower(status=active)`, creates
+`BorrowerAccount(account_status=approved, pin_hash=NULL)`, records the reviewer/time, and links the
+resulting Borrower. Rejection records a bounded reason without creating either identity. Both
+decisions are terminal and single-use. Registration approval is not mobile-account activation;
+M05 creates no PIN, activation code, device, Borrower JWT, or Borrower session.
