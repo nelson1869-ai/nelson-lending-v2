@@ -176,12 +176,12 @@ never force-pushed or merged without explicit review approval.
 
 ### M09 — Loan Domain & Calculator
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m09-loan-domain-calculator`
 - **Goal:** Implement the canonical Flexible Reducing-Balance model and calendar-safe schedules.
 - **Topics to Learn:** Financial `Decimal` arithmetic; reducing balance; interest; Monthly and Twice-a-Month schedules; calendar-safe dates; quotes; regression tests.
 - **Deliverables:** Loan domain model & `0005_loans` migration; canonical Flexible Reducing-Balance calculator; pure flexible payment allocation rules; Owner loan quote API (`POST /api/v1/owner/loans/quote`); financial unit & integration regression tests.
-- **Tests / Quality Gates:** `Backend import OK`; full pytest 136 passed (unit + integration); Ruff lint passed; Ruff format checked 64 files; mypy passed 42 application source files; `0005_loans` current/head; Alembic drift check clean; Owner & Borrower Flutter apps regression clean.
+- **Tests / Quality Gates:** `Backend import OK`; full pytest 149 passed (unit + integration); Ruff lint passed; Ruff format checked 71 files; mypy passed 45 application source files; `0005_loans` current/head; Alembic drift check clean; Owner & Borrower Flutter apps regression clean.
 - **Educational Commits:**
   - `3d7b34a` — `feat(loans): add loan domain persistence`
   - `9bc29a7` — `feat(loans): implement reducing balance calculator`
@@ -190,8 +190,10 @@ never force-pushed or merged without explicit review approval.
   - `0811d3d` — `test(loans): cover financial calculator regressions`
   - `e29463f` — `fix(loans): defer lifecycle persistence decisions`
   - `7889c32` — `fix(loans): validate twice-monthly first due date`
-- **Completion Commit:** Pending review and merge
-- **Merge Commit:** Pending
+  - `e9f3fb0` — `docs: record m09 review fixes`
+  - `ae2174f` — `chore(loans): format twice-monthly validation code`
+- **Completion Commit:** `docs: record m09 completion`
+- **Merge Commit:** `c2840540d246f38a9cb2adfb9db9b8eee72d244f`
 - **Notes / Lessons Learned:** The backend is the sole authoritative calculator for loans. New V2 loans support exclusively the Flexible Reducing-Balance model with Monthly or Twice-a-Month (15th and month-end) payment frequencies. All financial arithmetic uses Python `Decimal` with explicit `ROUND_HALF_UP` centavo quantization. Monthly schedules handle month-end re-expansion (e.g. Jan 31 -> Feb 28 -> Mar 31) and leap years deterministically. Twice-a-Month `firstDueDate` is strictly validated to be either the 15th or last calendar day of the month, returning HTTP 422 for invalid dates rather than silently transforming them. Durable loan lifecycle states and transition timestamps are deferred to M11. The Owner loan quote API is stateless and does not persist loan records.
 
 ### M10 — Borrower Loan Requests
