@@ -28,13 +28,8 @@ def upgrade() -> None:
         sa.Column("term_months", sa.Integer(), nullable=False),
         sa.Column("payment_frequency", sa.String(length=20), nullable=False),
         sa.Column("number_of_payments", sa.Integer(), nullable=False),
-        sa.Column("status", sa.String(length=20), server_default="draft", nullable=False),
         sa.Column("first_due_date", sa.Date(), nullable=False),
         sa.Column("final_due_date", sa.Date(), nullable=False),
-        sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("activated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("paid_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("cancelled_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -72,10 +67,6 @@ def upgrade() -> None:
             name=op.f("ck_loans_payment_frequency_valid"),
         ),
         sa.CheckConstraint(
-            "status IN ('draft', 'approved', 'active', 'paid', 'cancelled', 'defaulted')",
-            name=op.f("ck_loans_loan_status_valid"),
-        ),
-        sa.CheckConstraint(
             "final_due_date >= first_due_date",
             name=op.f("ck_loans_final_due_date_after_first"),
         ),
@@ -88,19 +79,10 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_loans")),
     )
     op.create_index(op.f("ix_loans_borrower_id"), "loans", ["borrower_id"], unique=False)
-    op.create_index(op.f("ix_loans_status"), "loans", ["status"], unique=False)
-    op.create_index(
-        op.f("ix_loans_borrower_id_status"),
-        "loans",
-        ["borrower_id", "status"],
-        unique=False,
-    )
     op.create_index(op.f("ix_loans_final_due_date"), "loans", ["final_due_date"], unique=False)
 
 
 def downgrade() -> None:
     op.drop_index(op.f("ix_loans_final_due_date"), table_name="loans")
-    op.drop_index(op.f("ix_loans_borrower_id_status"), table_name="loans")
-    op.drop_index(op.f("ix_loans_status"), table_name="loans")
     op.drop_index(op.f("ix_loans_borrower_id"), table_name="loans")
     op.drop_table("loans")

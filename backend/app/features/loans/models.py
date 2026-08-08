@@ -1,6 +1,6 @@
-"""Loan persistence models and domain status definitions."""
+"""Loan persistence models for core financial contract terms."""
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Final
 from uuid import UUID, uuid4
@@ -8,7 +8,6 @@ from uuid import UUID, uuid4
 from sqlalchemy import (
     CheckConstraint,
     Date,
-    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -24,7 +23,6 @@ from app.db.types import MONEY_SQL_TYPE, RATE_SQL_TYPE
 if TYPE_CHECKING:
     from app.features.borrowers.models import Borrower
 
-LOAN_STATUSES: Final = ("draft", "approved", "active", "paid", "cancelled", "defaulted")
 PAYMENT_FREQUENCIES: Final = ("monthly", "twice_monthly")
 
 
@@ -58,16 +56,10 @@ class Loan(TimestampMixin, Base):
             name="payment_frequency_valid",
         ),
         CheckConstraint(
-            "status IN ('draft', 'approved', 'active', 'paid', 'cancelled', 'defaulted')",
-            name="loan_status_valid",
-        ),
-        CheckConstraint(
             "final_due_date >= first_due_date",
             name="final_due_date_after_first",
         ),
         Index("ix_loans_borrower_id", "borrower_id"),
-        Index("ix_loans_status", "status"),
-        Index("ix_loans_borrower_id_status", "borrower_id", "status"),
         Index("ix_loans_final_due_date", "final_due_date"),
     )
 
@@ -105,11 +97,6 @@ class Loan(TimestampMixin, Base):
         Integer,
         nullable=False,
     )
-    status: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False,
-        default="draft",
-    )
     first_due_date: Mapped[date] = mapped_column(
         Date,
         nullable=False,
@@ -117,22 +104,6 @@ class Loan(TimestampMixin, Base):
     final_due_date: Mapped[date] = mapped_column(
         Date,
         nullable=False,
-    )
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
-    activated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
-    paid_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
-    cancelled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
     )
 
     borrower: Mapped["Borrower"] = relationship("Borrower", lazy="raise")
