@@ -210,15 +210,25 @@ never force-pushed or merged without explicit review approval.
 
 ### M11 — Loan Lifecycle
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m11-loan-lifecycle`
 - **Goal:** Model deliberate, auditable loan transitions from draft through terminal outcomes.
 - **Topics to Learn:** State machines; authorization; idempotency; transaction boundaries; audit events; persisted states versus transition timestamps.
 - **Deliverables:** Loan persistence; guarded Draft → Approved → Disbursed/Active → Paid/Cancelled/Defaulted transitions; idempotent disbursement; audit records.
 - **Tests / Quality Gates:** Transition matrix; invalid transitions; concurrency/idempotency; transactional rollback; authorization; audit completeness.
-- **Completion Commit:** Pending
-- **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Established durable `Loan` entity (`loans` table) linked 1:1 with approved `LoanRequest` via `loan_request_id` FK and unique index `ix_loans_loan_request_id`. Implemented explicit loan state machine supporting `pending_disbursement` (initial state upon request conversion), `active` (set when Owner confirms disbursement), `cancelled` (set when Owner cancels before disbursement), `paid`, and `defaulted` (schema-supported for future payment milestones). Enforced strict state transition matrix and protected conversion, disbursement, and cancellation endpoints with pessimistic row-locking (`SELECT ... FOR UPDATE OF loans`). Preserved financial precision using `Decimal` / `NUMERIC(14,2)` and `NUMERIC(12,10)` rates. Implemented Owner loan list/detail views (with quote preview) and Borrower own-loan list/detail views with strict cross-borrower and role authorization isolation. Delivered Flutter loan lifecycle experiences for both `owner_mobile` (list, detail with disbursement/cancellation actions, request-to-loan conversion) and `borrower_mobile` (my loans list and contract detail with schedule preview). Passed full quality gates (Alembic migration 0007 upgrade/downgrade, 171 backend tests, Ruff, mypy, Flutter analyze 0 issues, and Flutter test suites).
+- **Completion Commits:**
+  - `58a73c7` — `feat(loans): add durable loan lifecycle schema`
+  - `46e4f43` — `feat(loans): convert approved requests into loans`
+  - `9b54a32` — `test(loans): cover loan lifecycle transitions`
+  - `6354a8a` — `feat(owner_mobile): add loan contract lifecycle experiences`
+  - `a166d25` — `feat(borrower_mobile): add borrower loan contracts view`
+  - `9057a85` — `docs: mark m11 ready for review`
+  - `2f6dab3` — `fix(loans): enforce loan request source invariant`
+  - `efe16e0` — `test(loans): cover loan source persistence invariant`
+  - `a2bdbe6` — `fix(launcher): enforce LF line endings on shell scripts`
+- **Merge Commit:** `5e9f4548d547eeb3e291c99a88647bec98069aca` — `merge: complete m11 loan lifecycle`
+- **Notes / Lessons Learned:** Established durable `Loan` entity (`loans` table) linked 1:1 with approved `LoanRequest` via `loan_request_id` NOT NULL FK and unique index `ix_loans_loan_request_id`. Implemented explicit loan state machine supporting `pending_disbursement` (initial state upon request conversion), `active` (set when Owner confirms disbursement), `cancelled` (set when Owner cancels before disbursement), `paid`, and `defaulted` (schema-supported for future payment milestones). Enforced strict state transition matrix and protected conversion, disbursement, and cancellation endpoints with pessimistic row-locking (`SELECT ... FOR UPDATE OF loans`). Preserved financial precision using `Decimal` / `NUMERIC(14,2)` and `NUMERIC(12,10)` rates. Implemented Owner loan list/detail views (with quote preview) and Borrower own-loan list/detail views with strict cross-borrower and role authorization isolation. Delivered Flutter loan lifecycle experiences for both `owner_mobile` (list, detail with disbursement/cancellation actions, request-to-loan conversion) and `borrower_mobile` (my loans list and contract detail with schedule preview). Passed full quality gates (Alembic migration 0007 upgrade/downgrade, 173 backend tests, Ruff, mypy, Flutter analyze 0 issues, Flutter test suites, and APK builds). LF shell-script normalization (`.gitattributes`) prevents WSL shebang failures upon checkout.
+
 
 
 ### M12 — Flexible Payments
