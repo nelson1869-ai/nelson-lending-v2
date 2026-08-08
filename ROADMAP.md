@@ -145,6 +145,8 @@ never force-pushed or merged without explicit review approval.
   - `feat(owner): add api client and secure session storage`
   - `feat(owner): implement owner authentication flow`
   - `test(owner): cover owner app foundation`
+  - `fix(owner): propagate expired sessions to auth state`
+  - `chore(dev): add reliable local application launcher`
 - **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
 - **Notes / Lessons Learned:** The Owner mobile application uses a clean feature-oriented architecture with Flutter Riverpod for state management, GoRouter for declarative protected routing, Dio for HTTP communication, and FlutterSecureStorage for sensitive session persistence. Short-lived access JWTs are held in memory, while high-entropy refresh tokens are securely stored and rotated atomically on refresh. Single-flight refresh prevents concurrency race conditions. The app strictly enforces the single-Owner business model without staff roles or RBAC matrices and isolates Owner authentication from Borrower identity.

@@ -22,12 +22,18 @@ local development database.
 ## Run and verify
 
 ```bash
+./start.sh
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 pytest
 ruff check .
 ruff format --check .
 mypy app
 ./verify.sh
+```
+
+Running `./start.sh` from the repository root validates the environment, applies Alembic migrations, launches the backend service on port 8000, checks PostgreSQL readiness, and launches the Owner Flutter application on the Android emulator. Override `OWNER_API_BASE_URL` for physical devices:
+```bash
+OWNER_API_BASE_URL=http://192.168.1.50:8000 ./start.sh
 ```
 
 `GET /health/live` proves that the API process can answer without contacting PostgreSQL.
