@@ -14,7 +14,11 @@ from app.features.loans.calculator import LoanQuote, ScheduleItem
 class LoanSchema(BaseModel):
     """Base schema using mobile-friendly camelCase JSON aliases."""
 
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
 
 
 class LoanQuoteRequest(LoanSchema):

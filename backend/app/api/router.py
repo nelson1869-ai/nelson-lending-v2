@@ -12,6 +12,10 @@ from app.features.borrowers.registration_router import (
 from app.features.borrowers.registration_router import (
     public_router as borrower_registration_router,
 )
+from app.features.loan_requests.router import (
+    borrower_loan_requests_router,
+    owner_loan_requests_router,
+)
 from app.features.loans.router import router as owner_loans_router
 from app.features.owner_identity.router import router as owner_auth_router
 
@@ -23,6 +27,8 @@ versioned_router.include_router(owner_auth_router)
 versioned_router.include_router(owner_activation_router)
 versioned_router.include_router(borrower_auth_router)
 versioned_router.include_router(owner_loans_router)
+versioned_router.include_router(borrower_loan_requests_router)
+versioned_router.include_router(owner_loan_requests_router)
 
 api_router.include_router(health_router)
 api_router.include_router(versioned_router, prefix=get_settings().api_v1_prefix)
