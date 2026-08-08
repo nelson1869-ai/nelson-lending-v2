@@ -1,8 +1,7 @@
 # Lending Nelson V2 Backend
 
-M03 adds the first persistent identity and business-settings schema to the Python 3.12 FastAPI
-service. It deliberately contains no authentication behavior, lending, payment, or accounting
-features.
+M04 adds secure authentication for the one business Owner to the Python 3.12 FastAPI service.
+Borrower authentication, lending, payment, and accounting features remain deliberately deferred.
 
 ## Local setup in WSL
 
@@ -128,5 +127,60 @@ tests:
 
 The schema keeps the Borrower business record separate from its app account. Borrower deletion is
 restricted while an account exists; deleting an account cascades to its devices and hashed refresh
-tokens, and deleting a device cascades its tokens. Authentication, token issuance, hashing, and
-Owner bootstrap remain later milestones.
+tokens, and deleting a device cascades its tokens.
+
+## Owner authentication
+
+Set these values in the ignored `.env` file:
+
+```text
+JWT_SECRET_KEY=<random secret of at least 32 characters>
+JWT_ALGORITHM=HS256
+OWNER_ACCESS_TOKEN_MINUTES=15
+OWNER_REFRESH_TOKEN_DAYS=30
+```
+
+Generate a local secret without saving it to shell history, then place the result directly in
+`.env` without committing it:
+
+```bash
+.venv/bin/python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Staging and production reject the committed development placeholder. Bootstrap the one Owner from
+an interactive terminal; the password is prompted twice without echo and must contain at least 12
+characters:
+
+```bash
+.venv/bin/python scripts/bootstrap_owner.py --username nelson
+```
+
+Bootstrap refuses when any Owner row already exists. Usernames are trimmed and lowercased;
+passwords are never trimmed. Login failures do not reveal whether the username, password, or
+account state failed.
+
+The versioned endpoints are:
+
+```text
+POST /api/v1/owner/auth/login
+POST /api/v1/owner/auth/refresh
+POST /api/v1/owner/auth/logout
+GET  /api/v1/owner/auth/me
+```
+
+Example request bodies use camelCase:
+
+```json
+{"username": "nelson", "password": "<entered securely>"}
+```
+
+```json
+{"refreshToken": "<redacted>"}
+```
+
+Login and refresh return a short-lived HS256 Owner access JWT plus a random opaque refresh token.
+Only the SHA-256 refresh-token hash is stored because the token itself is a high-entropy random
+secret; passwords instead use salted Argon2id. Refresh rotates the session under a row lock, so
+the old token cannot be reused. Logout revokes the submitted refresh session; an already-issued
+access JWT remains valid only until its short expiration. Password recovery, MFA, distributed
+login throttling, and Borrower authentication are intentionally deferred.
