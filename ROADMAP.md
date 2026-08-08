@@ -24,15 +24,15 @@ on `main`. Nothing is pushed until a later milestone explicitly introduces a rem
 
 ### M01 — Architecture & Governance Foundation
 
-- **Status:** Not Started
+- **Status:** In Progress
 - **Branch:** `feature/m01-architecture-foundation`
 - **Goal:** Define the system, domain boundaries, repository governance, and learning workflow before implementation.
 - **Topics to Learn:** System architecture; monorepo organization; domain boundaries; agent governance; technical documentation; Git status, branches, switches, commits, logs, shows, and non-fast-forward merges.
 - **Deliverables:** `AGENTS.md`; expanded `README.md` and `ROADMAP.md`; `.gitignore`; `docs/architecture/ARCHITECTURE.md`; `docs/domain/LOAN_RULES.md`; `docs/development/DEVELOPMENT_WORKFLOW.md`.
 - **Tests / Quality Gates:** Documentation consistency; forbidden-role/repayment/frequency review; link and formatting review; clean staged diff; clean working tree after commit.
-- **Completion Commit:** Pending
+- **Completion Commit:** `2557faf` — `docs: define v2 architecture and agent rules`
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Notes / Lessons Learned:** Architecture boundaries and agent governance are documented first so later implementation decisions can be reviewed against stable constraints.
 
 ### M02 — Backend Foundation
 
