@@ -1,8 +1,7 @@
 # Lending Nelson V2 Backend
 
-M05 adds public Borrower registration and Owner-controlled approval/rejection to the Python 3.12
-FastAPI service. Borrower activation/authentication, lending, payment, and accounting remain
-deliberately deferred.
+M06 adds secure Borrower activation and device-bound authentication to the Python 3.12 FastAPI
+service. Flutter, lending, payment, accounting, and automated code delivery remain deferred.
 
 ## Local setup in WSL
 
@@ -229,3 +228,29 @@ Approval locks the pending request and atomically creates `Borrower(status=activ
 resulting Borrower. Rejection records a bounded reason without creating either identity. Both
 decisions are terminal and single-use. Registration approval is not mobile-account activation;
 M05 creates no PIN, activation code, device, Borrower JWT, or Borrower session.
+
+## Borrower activation and authentication
+
+Configure dedicated random secrets for activation-code and device-identifier HMACs. Production
+and staging reject the documented local placeholders. Defaults are a 15-minute activation code,
+five activation attempts, a 15-minute Borrower access JWT, and a 30-day refresh session.
+
+```text
+POST /api/v1/owner/borrowers/<BORROWER_ID>/activation-code
+POST /api/v1/borrower/auth/activate
+POST /api/v1/borrower/auth/login
+GET  /api/v1/borrower/auth/me
+POST /api/v1/borrower/auth/refresh
+POST /api/v1/borrower/auth/logout
+```
+
+The Owner endpoint returns the six-digit code once for manual delivery until notification
+infrastructure exists. The database stores only keyed HMAC code/device digests, Argon2id PIN
+hashes, and SHA-256 hashes of high-entropy opaque refresh tokens. Never log any plaintext value.
+
+Approval is not activation; activation is not login. Activation consumes the code and establishes
+the six-digit PIN. Login then creates an untrusted device record, a short-lived
+`borrower_access` JWT, and a device-bound refresh session. Refresh rotates under a row lock, and
+logout revokes refresh capability while an existing access JWT expires naturally. Owner and
+Borrower access tokens are deliberately not interchangeable. PIN recovery, distributed login
+throttling, trust approval, and automated code delivery are future security decisions.

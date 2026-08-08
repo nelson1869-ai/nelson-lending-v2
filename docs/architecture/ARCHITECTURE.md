@@ -83,6 +83,21 @@ creates and links both identity records before marking the request approved; fai
 three changes. The resulting account has no PIN and cannot authenticate. Review metadata provides
 durable basic traceability while a formal audit subsystem remains deferred.
 
+M06 completes the isolated Borrower authentication boundary:
+
+```text
+Owner issues one-time code → Borrower activates with code + PIN → Borrower logs in on device
+                                                                  ↓
+                                      borrower_access JWT + hashed device-bound refresh session
+```
+
+Activation codes are six digits but stored as account-bound HMAC-SHA256 digests under a dedicated
+secret; wrong attempts are durable and bounded. PINs use salted Argon2id. Device identifiers use a
+separate keyed HMAC, while random opaque refresh tokens use SHA-256 for lookup. Activation and
+refresh lock their current rows so concurrent reuse has one winner. Owner and Borrower JWTs share
+the service signing configuration but remain separate security domains through mandatory token
+types and distinct dependencies.
+
 ## 4. Target Monorepo Structure
 
 The intended structure is documented now and created only when its milestone begins:
