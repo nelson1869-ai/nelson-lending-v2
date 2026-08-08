@@ -13,9 +13,8 @@ from app.features.accounting.constants import (
     ACCOUNT_LOANS_RECEIVABLE_CODE,
 )
 from app.features.accounting.service import (
-    CannotReverseReversalError,
+    BusinessEventJournalReversalError,
     InvalidJournalEntryError,
-    JournalAlreadyReversedError,
     UnbalancedJournalError,
     ensure_system_accounts,
     post_journal,
@@ -101,45 +100,41 @@ async def test_post_journal_single_sided_rejected(db_session: AsyncSession) -> N
         )
 
 
-async def test_journal_reversal_creates_compensating_journal(db_session: AsyncSession) -> None:
-    """Verify reversing a journal creates an exact opposite compensating transaction."""
+async def test_reverse_journal_rejects_business_events(db_session: AsyncSession) -> None:
+    """Verify reverse_journal raises BusinessEventJournalReversalError for business events."""
     accounts = await ensure_system_accounts(db_session)
     cash = accounts[ACCOUNT_CASH_CODE]
-    income = accounts[ACCOUNT_INTEREST_INCOME_CODE]
     receivable = accounts[ACCOUNT_LOANS_RECEIVABLE_CODE]
+    income = accounts[ACCOUNT_INTEREST_INCOME_CODE]
 
-    orig_entries = [
-        (cash, Decimal("700.00"), Decimal("0.00")),
-        (income, Decimal("0.00"), Decimal("200.00")),
-        (receivable, Decimal("0.00"), Decimal("500.00")),
-    ]
+    # 1. Loan disbursement reversal rejected
+    disb_tx = await post_journal(
+        db_session,
+        event_type="loan_disbursement",
+        source_id=uuid4(),
+        description="Disbursement event",
+        effective_date=date(2026, 6, 15),
+        entries=[
+            (receivable, Decimal("1000.00"), Decimal("0.00")),
+            (cash, Decimal("0.00"), Decimal("1000.00")),
+        ],
+    )
+    with pytest.raises(BusinessEventJournalReversalError) as exc_disb:
+        await reverse_journal(db_session, disb_tx.id)
+    assert "cannot be reversed independently" in str(exc_disb.value)
 
-    orig_tx = await post_journal(
+    # 2. Payment reversal rejected
+    pay_tx = await post_journal(
         db_session,
         event_type="payment",
         source_id=uuid4(),
-        description="Original payment",
+        description="Payment event",
         effective_date=date(2026, 6, 15),
-        entries=orig_entries,
+        entries=[
+            (cash, Decimal("200.00"), Decimal("0.00")),
+            (income, Decimal("0.00"), Decimal("200.00")),
+        ],
     )
-
-    rev_tx = await reverse_journal(db_session, orig_tx.id, reason="Customer error")
-
-    assert rev_tx.reversal_of_id == orig_tx.id
-    assert rev_tx.event_type == "reversal"
-    assert len(rev_tx.entries) == 3
-
-    # Check reversed line entries
-    rev_by_acc = {e.account.code: e for e in rev_tx.entries}
-    assert rev_by_acc[ACCOUNT_CASH_CODE].credit == Decimal("700.00")
-    assert rev_by_acc[ACCOUNT_CASH_CODE].debit == Decimal("0.00")
-    assert rev_by_acc[ACCOUNT_INTEREST_INCOME_CODE].debit == Decimal("200.00")
-    assert rev_by_acc[ACCOUNT_LOANS_RECEIVABLE_CODE].debit == Decimal("500.00")
-
-    # Reversing again must be rejected
-    with pytest.raises(JournalAlreadyReversedError):
-        await reverse_journal(db_session, orig_tx.id)
-
-    # Reversing a reversal transaction must be rejected
-    with pytest.raises(CannotReverseReversalError):
-        await reverse_journal(db_session, rev_tx.id)
+    with pytest.raises(BusinessEventJournalReversalError) as exc_pay:
+        await reverse_journal(db_session, pay_tx.id)
+    assert "cannot be reversed independently" in str(exc_pay.value)
