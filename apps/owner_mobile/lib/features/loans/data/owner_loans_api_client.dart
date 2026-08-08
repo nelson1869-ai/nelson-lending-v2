@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
 import '../domain/owner_loan_models.dart';
+import '../domain/owner_payment_models.dart';
 
 final ownerLoansApiClientProvider = Provider<OwnerLoansApiClient>((ref) {
   final apiClient = ref.watch(apiClientProvider);
@@ -44,5 +45,30 @@ class OwnerLoansApiClient {
   Future<OwnerLoanModel> cancelLoan(String loanId) async {
     final res = await _dio.post('/owner/loans/$loanId/cancel');
     return OwnerLoanModel.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<OwnerPaymentModel> postPayment(
+    String loanId, {
+    required String amount,
+    required String paymentDate,
+    String? reference,
+    String? note,
+  }) async {
+    final body = <String, dynamic>{
+      'amount': amount,
+      'paymentDate': paymentDate,
+      if (reference != null && reference.isNotEmpty) 'reference': reference,
+      if (note != null && note.isNotEmpty) 'note': note,
+    };
+    final res = await _dio.post('/owner/loans/$loanId/payments', data: body);
+    return OwnerPaymentModel.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<List<OwnerPaymentModel>> fetchLoanPayments(String loanId) async {
+    final res = await _dio.get('/owner/loans/$loanId/payments');
+    final list = res.data as List<dynamic>;
+    return list
+        .map((e) => OwnerPaymentModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

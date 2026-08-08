@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/owner_loans_api_client.dart';
 import '../domain/owner_loan_models.dart';
+import '../domain/owner_payment_models.dart';
 
 final ownerLoansFilterProvider = StateProvider<String?>((ref) => null);
 
@@ -16,6 +17,12 @@ final ownerLoanDetailProvider = FutureProvider.autoDispose
     .family<OwnerLoanDetailModel, String>((ref, loanId) async {
   final client = ref.watch(ownerLoansApiClientProvider);
   return client.fetchLoanDetail(loanId);
+});
+
+final ownerLoanPaymentsProvider = FutureProvider.autoDispose
+    .family<List<OwnerPaymentModel>, String>((ref, loanId) async {
+  final client = ref.watch(ownerLoansApiClientProvider);
+  return client.fetchLoanPayments(loanId);
 });
 
 final ownerLoansControllerProvider =
@@ -65,6 +72,33 @@ class OwnerLoansController extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(ownerLoanDetailProvider(loanId));
       state = const AsyncValue.data(null);
       return loan;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return null;
+    }
+  }
+
+  Future<OwnerPaymentModel?> postPayment({
+    required String loanId,
+    required String amount,
+    required String paymentDate,
+    String? reference,
+    String? note,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final payment = await _apiClient.postPayment(
+        loanId,
+        amount: amount,
+        paymentDate: paymentDate,
+        reference: reference,
+        note: note,
+      );
+      _ref.invalidate(ownerLoansListProvider);
+      _ref.invalidate(ownerLoanDetailProvider(loanId));
+      _ref.invalidate(ownerLoanPaymentsProvider(loanId));
+      state = const AsyncValue.data(null);
+      return payment;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       return null;
