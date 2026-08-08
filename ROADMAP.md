@@ -24,16 +24,19 @@ on `main`. Nothing is pushed until a later milestone explicitly introduces a rem
 
 ### M01 — Architecture & Governance Foundation
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m01-architecture-foundation`
 - **Goal:** Define the system, domain boundaries, repository governance, and learning workflow before implementation.
 - **Topics to Learn:** System architecture; monorepo organization; domain boundaries; agent governance; technical documentation; Git status, branches, switches, commits, logs, shows, and non-fast-forward merges.
 - **Concepts Learned:** Separate identity/security domains; backend and PostgreSQL authority; feature-oriented boundaries; transaction/idempotency principles; canonical lending rules; intentional feature-branch commits and review-before-merge workflow.
 - **Deliverables:** Created `AGENTS.md`, `docs/architecture/ARCHITECTURE.md`, `docs/domain/LOAN_RULES.md`, and `docs/development/DEVELOPMENT_WORKFLOW.md`; updated `README.md` and this roadmap. No application scaffold was created.
 - **Tests / Quality Gates:** Required-file/link checks passed; documentation consistency and prohibited-concept contexts reviewed; M02–M16 remain Not Started; repository tree contains no application directories; staged patches and whitespace checks passed.
-- **Completion Commit:** `2557faf` — `docs: define v2 architecture and agent rules`; `3edc666` — `docs: define loan rules and learning workflow`
-- **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Defining product prohibitions and authority boundaries before scaffolding prevents accidental legacy design carryover. Small thematic commits make the learning history easier to inspect. M01 remains unmerged until owner review.
+- **Completion Commits:**
+  - `2557faf` — `docs: define v2 architecture and agent rules`
+  - `3edc666` — `docs: define loan rules and learning workflow`
+  - `f10cad9` — `docs: mark m01 ready for review`
+- **Merge Commit:** `d3a5c882f37b2de4c3b37aa24cbc0ec467c42373` — `merge: complete m01 architecture foundation`
+- **Notes / Lessons Learned:** Defining product prohibitions and authority boundaries before scaffolding prevents accidental legacy design carryover. The feature-branch lifecycle used multiple meaningful commits, explicit review before merge, and a non-fast-forward merge that preserves the milestone boundary. Keeping the M01 branch makes its implementation history available for later study.
 
 ### M02 — Backend Foundation
 
