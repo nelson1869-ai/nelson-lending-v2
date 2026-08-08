@@ -16,6 +16,9 @@ class AuthController extends StateNotifier<AuthState> {
         _tokenStorage = tokenStorage,
         super(const AuthState.initial());
 
+  @override
+  set state(AuthState value) => super.state = value;
+
   /// Attempts to restore existing session on startup.
   Future<void> restoreSession() async {
     final refreshToken = await _tokenStorage.getRefreshToken();
@@ -75,7 +78,8 @@ class AuthController extends StateNotifier<AuthState> {
   }
 }
 
-final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AuthState>((ref) {
   final repository = ref.watch(ownerAuthRepositoryProvider);
   final tokenStorage = ref.watch(tokenStorageProvider);
 

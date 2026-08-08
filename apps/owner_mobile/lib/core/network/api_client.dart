@@ -56,7 +56,8 @@ class ApiClient {
             if (refreshed) {
               try {
                 final opts = error.requestOptions;
-                opts.headers['Authorization'] = 'Bearer ${_tokenStorage.accessToken}';
+                opts.headers['Authorization'] =
+                    'Bearer ${_tokenStorage.accessToken}';
                 final response = await dio.fetch(opts);
                 return handler.resolve(response);
               } on DioException catch (retryError) {
@@ -106,11 +107,15 @@ class ApiClient {
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        final newAccessToken = data['accessToken'] as String? ?? data['access_token'] as String;
-        final newRefreshToken = data['refreshToken'] as String? ?? data['refresh_token'] as String;
-        final expiresAtStr = data['accessTokenExpiresAt'] as String? ?? data['access_token_expires_at'] as String;
+        final newAccessToken =
+            data['accessToken'] as String? ?? data['access_token'] as String;
+        final newRefreshToken =
+            data['refreshToken'] as String? ?? data['refresh_token'] as String;
+        final expiresAtStr = data['accessTokenExpiresAt'] as String? ??
+            data['access_token_expires_at'] as String;
 
-        _tokenStorage.setAccessToken(newAccessToken, DateTime.parse(expiresAtStr));
+        _tokenStorage.setAccessToken(
+            newAccessToken, DateTime.parse(expiresAtStr));
         await _tokenStorage.saveRefreshToken(newRefreshToken);
         return true;
       }

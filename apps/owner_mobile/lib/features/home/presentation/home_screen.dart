@@ -27,7 +27,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _isCheckingHealth = true;
     });
 
-    final isConnected = await ref.read(ownerAuthRepositoryProvider).checkHealth();
+    final isConnected =
+        await ref.read(ownerAuthRepositoryProvider).checkHealth();
 
     if (mounted) {
       setState(() {
@@ -60,13 +61,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
-                  crossAxisAlignment: CrossAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
@@ -80,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 owner?.username ?? 'Owner User',
@@ -98,10 +99,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         Chip(
-                          label: Text(owner?.isActive == true ? 'Active' : 'Inactive'),
+                          label: Text(
+                              owner?.isActive == true ? 'Active' : 'Inactive'),
                           backgroundColor: owner?.isActive == true
-                              ? Colors.green.withOpacity(0.2)
-                              : Colors.red.withOpacity(0.2),
+                              ? Colors.green.withValues(alpha: 0.2)
+                              : Colors.red.withValues(alpha: 0.2),
                           side: BorderSide.none,
                         ),
                       ],
@@ -128,12 +130,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
-                  crossAxisAlignment: CrossAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,10 +157,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Icon(
                           _isCheckingHealth
                               ? Icons.sync
-                              : (_isBackendConnected == true ? Icons.check_circle : Icons.error),
+                              : (_isBackendConnected == true
+                                  ? Icons.check_circle
+                                  : Icons.error),
                           color: _isCheckingHealth
                               ? Colors.orange
-                              : (_isBackendConnected == true ? Colors.green : Colors.red),
+                              : (_isBackendConnected == true
+                                  ? Colors.green
+                                  : Colors.red),
                         ),
                         const SizedBox(width: 12),
                         Text(
@@ -192,12 +197,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
-                  crossAxisAlignment: CrossAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Security & Session Governance',

@@ -31,7 +31,8 @@ class RouterNotifier extends ChangeNotifier {
     }
 
     // Unauthenticated -> force /login
-    if (status == AuthStatus.unauthenticated || status == AuthStatus.authenticating) {
+    if (status == AuthStatus.unauthenticated ||
+        status == AuthStatus.authenticating) {
       return isLoggingIn ? null : '/login';
     }
 

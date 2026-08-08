@@ -51,7 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 key: _formKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Icon(
                       Icons.shield_outlined,
@@ -76,8 +76,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    if (authState.errorMessage != null && authState.errorMessage!.isNotEmpty) ...[
+                    if (authState.errorMessage != null &&
+                        authState.errorMessage!.isNotEmpty) ...[
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -105,7 +105,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
                     ],
-
                     TextFormField(
                       controller: _usernameController,
                       enabled: !isAuthenticating,
@@ -124,7 +123,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     TextFormField(
                       controller: _passwordController,
                       enabled: !isAuthenticating,
@@ -136,7 +134,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                           ),
                           onPressed: () {
                             setState(() {
@@ -153,7 +153,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
-
                     ElevatedButton(
                       onPressed: isAuthenticating ? null : _submit,
                       child: isAuthenticating

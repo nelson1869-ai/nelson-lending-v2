@@ -20,13 +20,11 @@ class TokenPairData {
 
 class OwnerAuthRepository {
   final ApiClient _apiClient;
-  final TokenStorageService _tokenStorage;
 
   OwnerAuthRepository({
     required ApiClient apiClient,
-    required TokenStorageService tokenStorage,
-  })  : _apiClient = apiClient,
-        _tokenStorage = tokenStorage;
+    TokenStorageService? tokenStorage,
+  }) : _apiClient = apiClient;
 
   Future<TokenPairData> login({
     required String username,
@@ -42,9 +40,12 @@ class OwnerAuthRepository {
       );
 
       final data = response.data as Map<String, dynamic>;
-      final accessToken = data['accessToken'] as String? ?? data['access_token'] as String;
-      final refreshToken = data['refreshToken'] as String? ?? data['refresh_token'] as String;
-      final expiresAtStr = data['accessTokenExpiresAt'] as String? ?? data['access_token_expires_at'] as String;
+      final accessToken =
+          data['accessToken'] as String? ?? data['access_token'] as String;
+      final refreshToken =
+          data['refreshToken'] as String? ?? data['refresh_token'] as String;
+      final expiresAtStr = data['accessTokenExpiresAt'] as String? ??
+          data['access_token_expires_at'] as String;
 
       return TokenPairData(
         accessToken: accessToken,
@@ -64,9 +65,12 @@ class OwnerAuthRepository {
       );
 
       final data = response.data as Map<String, dynamic>;
-      final accessToken = data['accessToken'] as String? ?? data['access_token'] as String;
-      final newRefreshToken = data['refreshToken'] as String? ?? data['refresh_token'] as String;
-      final expiresAtStr = data['accessTokenExpiresAt'] as String? ?? data['access_token_expires_at'] as String;
+      final accessToken =
+          data['accessToken'] as String? ?? data['access_token'] as String;
+      final newRefreshToken =
+          data['refreshToken'] as String? ?? data['refresh_token'] as String;
+      final expiresAtStr = data['accessTokenExpiresAt'] as String? ??
+          data['access_token_expires_at'] as String;
 
       return TokenPairData(
         accessToken: accessToken,

@@ -19,10 +19,13 @@ class OwnerProfile {
       id: json['id'] as String,
       username: json['username'] as String,
       isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String? ?? json['created_at'] as String),
+      createdAt: DateTime.parse(
+          json['createdAt'] as String? ?? json['created_at'] as String),
       lastLoginAt: json['lastLoginAt'] != null
           ? DateTime.parse(json['lastLoginAt'] as String)
-          : (json['last_login_at'] != null ? DateTime.parse(json['last_login_at'] as String) : null),
+          : (json['last_login_at'] != null
+              ? DateTime.parse(json['last_login_at'] as String)
+              : null),
     );
   }
 

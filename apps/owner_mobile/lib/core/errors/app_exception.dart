@@ -12,35 +12,40 @@ abstract class AppException implements Exception {
 }
 
 class NetworkException extends AppException {
-  const NetworkException([String message = 'Network connection unavailable. Please check your internet connection.'])
-      : super(message);
+  const NetworkException(
+      [super.message =
+          'Network connection unavailable. Please check your internet connection.']);
 }
 
 class TimeoutException extends AppException {
-  const TimeoutException([String message = 'Request timed out. Please try again.'])
-      : super(message);
+  const TimeoutException(
+      [super.message = 'Request timed out. Please try again.']);
 }
 
 class UnauthorizedException extends AppException {
-  const UnauthorizedException([String message = 'Invalid credentials or session expired.', int? statusCode = 401])
-      : super(message, statusCode);
+  const UnauthorizedException(
+      [super.message = 'Invalid credentials or session expired.',
+      super.statusCode = 401]);
 }
 
 class ValidationException extends AppException {
   final Map<String, dynamic>? errors;
 
-  const ValidationException([String message = 'Invalid input parameters.', int? statusCode = 422, this.errors])
-      : super(message, statusCode);
+  const ValidationException(
+      [super.message = 'Invalid input parameters.',
+      super.statusCode = 422,
+      this.errors]);
 }
 
 class ServerException extends AppException {
-  const ServerException([String message = 'Server error encountered. Please try again later.', int? statusCode = 500])
-      : super(message, statusCode);
+  const ServerException(
+      [super.message = 'Server error encountered. Please try again later.',
+      super.statusCode = 500]);
 }
 
 class UnknownException extends AppException {
-  const UnknownException([String message = 'An unexpected error occurred.', int? statusCode])
-      : super(message, statusCode);
+  const UnknownException(
+      [super.message = 'An unexpected error occurred.', super.statusCode]);
 }
 
 /// Utility for converting raw DioExceptions into safe normalized AppExceptions.
@@ -64,7 +69,6 @@ AppException parseDioException(DioException error) {
         if (detail is String) {
           message = detail;
         } else if (detail is List && detail.isNotEmpty) {
-          // FastApi validation error list
           final first = detail.first;
           if (first is Map && first.containsKey('msg')) {
             message = first['msg'].toString();
@@ -73,9 +77,11 @@ AppException parseDioException(DioException error) {
       }
 
       if (statusCode == 401) {
-        return UnauthorizedException(message.isNotEmpty ? message : 'Invalid credentials', statusCode);
+        return UnauthorizedException(
+            message.isNotEmpty ? message : 'Invalid credentials', statusCode);
       } else if (statusCode == 422) {
-        return ValidationException(message.isNotEmpty ? message : 'Validation failed', statusCode);
+        return ValidationException(
+            message.isNotEmpty ? message : 'Validation failed', statusCode);
       } else if (statusCode != null && statusCode >= 500) {
         return ServerException('Server error ($statusCode)', statusCode);
       }
