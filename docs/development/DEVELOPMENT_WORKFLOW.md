@@ -176,6 +176,33 @@ tests.
 Database milestones additionally test migration from zero, downgrade/re-upgrade, constraints, and
 model behavior against a dedicated local PostgreSQL test database.
 
+### Local PostgreSQL workflow
+
+M03 uses PostgreSQL only on `127.0.0.1:5432`, with `lending_nelson_v2` for development and the
+separate `lending_nelson_v2_test` database for rollback-only integration tests. Before destructive
+work, inspect existing databases and confirm both the loopback host and exact database name.
+
+Schema changes follow this sequence:
+
+```text
+change SQLAlchemy metadata
+→ generate and inspect an Alembic revision
+→ upgrade a clean development database
+→ inspect tables and constraints
+→ downgrade to base
+→ re-upgrade to head
+→ run alembic check
+→ run integration tests against the dedicated test database
+```
+
+Integration tests require `TEST_DATABASE_URL`, carry the `integration` marker, and reject remote
+hosts or any database name other than `lending_nelson_v2_test`. A mocked database test is never
+reported as an integration test. The test database is not interchangeable with development data.
+
+Use PostgreSQL catalog queries (`pg_tables`, `pg_constraint`, and `pg_indexes`) plus
+`alembic current`, `alembic heads`, and `alembic check` to verify that code metadata, migration
+history, and the real schema agree.
+
 ### Flutter
 
 From each future Flutter application:

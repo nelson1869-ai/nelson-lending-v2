@@ -59,15 +59,21 @@ never force-pushed or merged without explicit review approval.
 
 ### M03 — PostgreSQL & Database Foundation
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m03-database-foundation`
 - **Goal:** Create the first persistent identity and business-settings schema on real local PostgreSQL.
 - **Topics to Learn:** PostgreSQL; SQLAlchemy ORM; relationships; constraints; indexes; UUIDs; `NUMERIC` and `Decimal`; Alembic migrations; integration-test isolation.
-- **Deliverables:** `OwnerUser`; `Borrower`; `BorrowerAccount`; `BorrowerDevice`; `BorrowerRefreshToken`; `BusinessSetting`; initial reversible migration; local development/test database workflow.
-- **Tests / Quality Gates:** Migration from zero; downgrade/re-upgrade; table inspection; uniqueness, CHECK, FK, singleton and single-owner tests; Decimal and timezone tests; full backend gates.
-- **Completion Commit:** Pending
+- **Concepts Learned:** Feature-oriented SQLAlchemy models; application-generated UUIDv4 identifiers; timezone-aware PostgreSQL timestamps; exact `NUMERIC`/`Decimal` rates; deterministic constraints; indexed foreign keys; partial and composite indexes; separate Borrower records and app accounts; reversible Alembic migrations; local dev/test database isolation; fail-closed real PostgreSQL tests.
+- **Deliverables:** Added `OwnerUser`, `Borrower`, `BorrowerAccount`, `BorrowerDevice`, `BorrowerRefreshToken`, and singleton `BusinessSetting` models; shared timestamp/model discovery infrastructure; one reversible initial identity migration with the safe settings seed; guarded PostgreSQL integration tests; and local database/migration/schema-inspection documentation. Authentication and lending behavior remain deferred.
+- **Tests / Quality Gates:** PostgreSQL 16.14 databases were recreated locally after old schema inspection; migration from zero, downgrade to base, and re-upgrade passed; `alembic current` and `heads` report `0001_initial_identity_schema`; `alembic check` reports no new operations; 16 real integration tests passed; full pytest 21 passed; Ruff lint passed; Ruff format checked 31 files; mypy passed 21 application files; FastAPI import passed; catalog inspection found only the seven expected tables, zero Owner rows, and the seeded settings singleton with a null estimate rate.
+- **Educational Commits:**
+  - `f7801f3` — `feat(db): add identity and borrower models`
+  - `55d785a` — `feat(db): add initial identity schema migration`
+  - `a73a8c2` — `test(db): add PostgreSQL schema integration tests`
+  - `4aed4a9` — `docs: mark m03 ready for review`
+- **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Inspect existing local databases first; do not silently reuse prior schemas or data.
+- **Notes / Lessons Learned:** Inspecting before reset exposed an older migration in both named databases, so only those two local project databases were recreated. Unique and CHECK constraints protect identity invariants, a partial unique index permits zero or one active Owner, and the token device/account composite FK prevents cross-account device references. Borrower deletion is restricted while account/device/token cleanup uses deliberate cascades. Integration tests use a dedicated exact-name loopback database, rollback each case, and remain distinct from mocked health tests. M03 is ready for review but not merged.
 
 ## Phase B — Authentication & Identity
 
