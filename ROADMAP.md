@@ -153,15 +153,20 @@ never force-pushed or merged without explicit review approval.
 
 ### M08 — Borrower Flutter Application Foundation
 
-- **Status:** In Progress
+- **Status:** Ready for Review
 - **Branch:** `feature/m08-borrower-flutter-foundation`
 - **Goal:** Establish the isolated Borrower mobile client and activation/login experience.
 - **Topics to Learn:** Separate Flutter applications; Borrower session state; activation UI; login UI; API integration; device identity.
-- **Deliverables:** Borrower app scaffold; API/session layer; activation/login routes; secure token storage; device registration integration.
-- **Tests / Quality Gates:** `flutter analyze`; unit/widget tests; activation/login state tests; session isolation; backend-authority review.
-- **Completion Commit:** Pending
+- **Deliverables:** Borrower app scaffold at `apps/borrower_mobile`; API/session layer; activation/login routes; secure token storage; device registration integration.
+- **Tests / Quality Gates:** `flutter analyze` passed; 24 unit/widget/router/auth tests passed in `flutter test`; `dart format` passed; debug APK built; Owner Flutter regression passed; backend regression quality gates passed.
+- **Educational Commits:**
+  - `chore(borrower): scaffold flutter application`
+  - `feat(borrower): add app architecture and navigation`
+  - `feat(borrower): add api client and secure device session`
+  - `chore(dev): support borrower app launcher in start.sh`
+- **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Notes / Lessons Learned:** The Borrower mobile application is built at `apps/borrower_mobile` as a separate Flutter project. It communicates exclusively with Borrower endpoints (`/api/v1/borrower/...`), maintaining strict identity, credential, and session isolation from Owner authentication. Access tokens are kept in memory, while high-entropy refresh tokens and stable app installation UUIDs (`borrower_device_identifier`) are securely persisted. Single-flight refresh prevents token rotation race conditions and automatically redirects to login on session expiration. The app provides public registration submission, activation code & 6-digit PIN verification, device-bound login, session restoration, and authenticated home profile display.
 
 ## Phase D — Lending Domain
 
