@@ -153,19 +153,23 @@ never force-pushed or merged without explicit review approval.
 
 ### M08 — Borrower Flutter Application Foundation
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m08-borrower-flutter-foundation`
 - **Goal:** Establish the isolated Borrower mobile client and activation/login experience.
 - **Topics to Learn:** Separate Flutter applications; Borrower session state; activation UI; login UI; API integration; device identity.
 - **Deliverables:** Borrower app scaffold at `apps/borrower_mobile`; API/session layer; activation/login routes; secure token storage; device registration integration.
-- **Tests / Quality Gates:** `flutter analyze` passed; 24 unit/widget/router/auth tests passed in `flutter test`; `dart format` passed; debug APK built; Owner Flutter regression passed; backend regression quality gates passed.
+- **Tests / Quality Gates:** `flutter analyze` passed; 25 unit/widget/router/auth tests passed in `flutter test`; `dart format` passed; debug APK built (`build\app\outputs\flutter-apk\app-debug.apk`); Owner Flutter regression passed (23 tests); backend regression quality gates passed (119 pytest, mypy, Ruff lint & format, Alembic 0004_borrower_activation current/head, Alembic drift check clean).
 - **Educational Commits:**
-  - `chore(borrower): scaffold flutter application`
-  - `feat(borrower): add app architecture and navigation`
-  - `feat(borrower): add api client and secure device session`
-  - `chore(dev): support borrower app launcher in start.sh`
-- **Completion Commit:** Pending review and merge
-- **Merge Commit:** Pending
+  - `96df8e0` — `chore(borrower): scaffold flutter application`
+  - `f3c99ed` — `feat(borrower): add app architecture and navigation`
+  - `7b1ab24` — `feat(borrower): add api client and secure device session`
+  - `f7ab814` — `chore(dev): support borrower app launcher in start.sh`
+  - `74a80f8` — `docs: mark m08 ready for review`
+  - `16928aa` — `test(borrower): cover borrower app foundation`
+  - `c0a2439` — `fix(borrower): ensure local logout on network failure`
+  - `9e5c279` — `chore(dev): separate backend and mobile launcher targets`
+- **Completion Commit:** `9e5c279bf7f348216d88a58ae37b507084441361` — `chore(dev): separate backend and mobile launcher targets`
+- **Merge Commit:** `4e47f4ff14740914269a32be603e074eb391465b` — `merge: complete m08 borrower flutter foundation`
 - **Notes / Lessons Learned:** The Borrower mobile application is built at `apps/borrower_mobile` as a separate Flutter project. It communicates exclusively with Borrower endpoints (`/api/v1/borrower/...`), maintaining strict identity, credential, and session isolation from Owner authentication. Access tokens are kept in memory, while high-entropy refresh tokens and stable app installation UUIDs (`borrower_device_identifier`) are securely persisted. Single-flight refresh prevents token rotation race conditions and automatically redirects to login on session expiration. The app provides public registration submission, activation code & 6-digit PIN verification, device-bound login, session restoration, and authenticated home profile display.
 
 ## Phase D — Lending Domain
