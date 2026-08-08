@@ -79,20 +79,20 @@ never force-pushed or merged without explicit review approval.
 
 ### M04 — Owner Authentication
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m04-owner-auth`
 - **Goal:** Implement secure authentication for the single business Owner.
 - **Topics to Learn:** Argon2id; password hashing; secure bootstrap; JWT access tokens; refresh sessions; authentication dependencies; logout and revocation; security testing.
 - **Deliverables:** Added a race-safe one-time Owner CLI bootstrap; Argon2id credential handling; typed Owner-only access JWTs; hashed opaque refresh-session persistence with locking, rotation, and revocation; login, refresh, logout, and `/me` APIs; and a canonical active-Owner dependency. Borrower authentication remains deferred.
 - **Tests / Quality Gates:** FastAPI import passed; full pytest 43 passed; real PostgreSQL integration suite 32 passed with 11 deselected; Ruff lint passed; Ruff format checked 41 files; mypy passed 27 application files; `0002_owner_auth_sessions` is current/head; Alembic reports no drift; test DB fresh install through 0001/0002 passed; redacted local API lifecycle smoke passed.
-- **Educational Commits:**
+- **Completion Commits:**
   - `040707f` — `feat(auth): add owner security primitives`
   - `9bf384d` — `feat(auth): add owner refresh session persistence`
   - `4a4b788` — `feat(auth): implement owner authentication flow`
   - `6e58523` — `test(auth): cover owner authentication lifecycle`
   - `dc5ed23` — `fix(auth): align generic login verification`
-- **Completion Commit:** Pending review and merge
-- **Merge Commit:** Pending
+  - `8631018` — `docs: mark m04 ready for review`
+- **Merge Commit:** `d3c96603047710169d3f354abaedc856c6332d99` — `merge: complete m04 owner authentication`
 - **Notes / Lessons Learned:** The only business identity remains Owner, with no role matrix. Human passwords require salted Argon2id while random high-entropy refresh tokens use deterministic SHA-256 lookup hashes. Login writes and refresh-session creation share a transaction; refresh uses `SELECT FOR UPDATE` so revocation and replacement are single-use and atomic. Logout revokes refresh capability while short-lived access JWTs expire naturally. Password recovery, MFA, Borrower authentication, and distributed login throttling remain deliberately deferred.
 
 ### M05 — Borrower Registration
