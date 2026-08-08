@@ -52,6 +52,7 @@ never force-pushed or merged without explicit review approval.
   - `a0d83ad` — `chore(backend): establish python project tooling`
   - `93309b6` — `feat(backend): add api and database infrastructure`
   - `5d27975` — `test(backend): add foundation quality gates`
+  - `a492030` — `docs: mark m02 ready for review`
 - **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
 - **Notes / Lessons Learned:** Import-time engine construction is lazy and does not connect to PostgreSQL. Request sessions never auto-commit, leaving transaction ownership to future domain services. Readiness can be unit-tested with a replaced probe while its live behavior still reports the real database state safely. CORS remains deferred until a web client can supply explicit allowed origins. M02 has no schema migration or business model.
