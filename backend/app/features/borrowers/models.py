@@ -15,7 +15,9 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
     text,
+    true,
 )
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -58,7 +60,12 @@ class Borrower(TimestampMixin, Base):
     # Contact phones may be shared; only the login phone on BorrowerAccount is unique.
     phone_number_normalized: Mapped[str] = mapped_column(String(32), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="active",
+        server_default="active",
+    )
 
     account: Mapped["BorrowerAccount | None"] = relationship(
         back_populates="borrower",
@@ -93,7 +100,12 @@ class BorrowerAccount(TimestampMixin, Base):
     phone_number_normalized: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
     # Nullable until PIN creation and hashing are implemented in M06.
     pin_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    account_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    account_status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="pending",
+        server_default="pending",
+    )
     phone_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -143,8 +155,18 @@ class BorrowerDevice(TimestampMixin, Base):
     device_identifier_hash: Mapped[str] = mapped_column(String(128), nullable=False)
     platform: Mapped[str] = mapped_column(String(32), nullable=False)
     push_token: Mapped[str | None] = mapped_column(Text, nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    is_trusted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=true(),
+    )
+    is_trusted: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false(),
+    )
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
