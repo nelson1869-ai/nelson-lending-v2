@@ -188,9 +188,11 @@ never force-pushed or merged without explicit review approval.
   - `8720254` — `feat(loans): add flexible payment allocation rules`
   - `bb7ed9f` — `feat(loans): expose owner loan quote api`
   - `0811d3d` — `test(loans): cover financial calculator regressions`
+  - `e29463f` — `fix(loans): defer lifecycle persistence decisions`
+  - `7889c32` — `fix(loans): validate twice-monthly first due date`
 - **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** The backend is the sole authoritative calculator for loans. New V2 loans support exclusively the Flexible Reducing-Balance model with Monthly or Twice-a-Month (15th and month-end) payment frequencies. All financial arithmetic uses Python `Decimal` with explicit `ROUND_HALF_UP` centavo quantization. Monthly schedules handle month-end re-expansion (e.g. Jan 31 -> Feb 28 -> Mar 31) and leap years deterministically. The payment allocation function allocates accepted payments interest-first, then principal, with any excess recorded as unapplied credit; future interest is calculated strictly on the reduced outstanding principal. The Owner loan quote API is stateless and does not persist loan records.
+- **Notes / Lessons Learned:** The backend is the sole authoritative calculator for loans. New V2 loans support exclusively the Flexible Reducing-Balance model with Monthly or Twice-a-Month (15th and month-end) payment frequencies. All financial arithmetic uses Python `Decimal` with explicit `ROUND_HALF_UP` centavo quantization. Monthly schedules handle month-end re-expansion (e.g. Jan 31 -> Feb 28 -> Mar 31) and leap years deterministically. Twice-a-Month `firstDueDate` is strictly validated to be either the 15th or last calendar day of the month, returning HTTP 422 for invalid dates rather than silently transforming them. Durable loan lifecycle states and transition timestamps are deferred to M11. The Owner loan quote API is stateless and does not persist loan records.
 
 ### M10 — Borrower Loan Requests
 

@@ -96,15 +96,18 @@ The schedule generator must handle leap years and different month lengths determ
 
 ### 4.2 Twice-a-Month Calendar Rules
 
-Twice a Month means two calendar occurrences per month, preferably:
+Twice a Month means two calendar occurrences per month:
 
 ```text
 15th + last calendar day
 ```
 
 It is not an endless `previous date + 15 days` recurrence. The second occurrence is February
-28/29, April 30, or the relevant month's 31st as appropriate. Exact first-period handling and
-disbursement-date edge cases will be finalized with executable schedule examples in M09.
+28/29, April 30, or the relevant month's 31st as appropriate.
+
+For Twice-a-Month schedules, `firstDueDate` MUST be explicitly either the 15th or the last calendar
+day of that month. Invalid dates (e.g. 1st, 7th, 14th, 16th, or non-month-end 29th) are rejected at
+the API boundary (HTTP 422) and domain calculator boundary rather than silently transformed.
 
 ## 5. Precision and Rounding
 
@@ -160,7 +163,8 @@ Draft
 
 This diagram does not require every label to become a persisted status. M11 will deliberately
 decide which concepts are durable states, which are transition timestamps/events, and which
-transitions are valid. Until then, no implementation should guess or prematurely lock the schema.
+transitions are valid. M09 persistence only models core financial contract terms and does not
+prematurely lock lifecycle states or timestamp columns.
 
 ## 9. Required Financial Tests
 
