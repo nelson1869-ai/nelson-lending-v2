@@ -114,8 +114,8 @@ never force-pushed or merged without explicit review approval.
 
 ### M06 — Borrower Authentication & Activation
 
-- **Status:** Not Started
-- **Branch:** `feature/m06-borrower-auth-activation`
+- **Status:** In Progress
+- **Branch:** `feature/m06-borrower-auth`
 - **Goal:** Activate approved borrowers and provide authentication fully isolated from Owner sessions.
 - **Topics to Learn:** Activation codes; PIN hashing; borrower JWTs; refresh-token rotation; device registration; trusted devices; account and borrower isolation.
 - **Deliverables:** Activation and borrower login APIs; hashed codes/PINs/tokens; device binding; refresh rotation; logout/revocation.
