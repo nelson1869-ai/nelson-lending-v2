@@ -1,7 +1,6 @@
 # Lending Nelson V2 Backend
 
-M06 adds secure Borrower activation and device-bound authentication to the Python 3.12 FastAPI
-service. Flutter, lending, payment, accounting, and automated code delivery remain deferred.
+M09 adds Loan domain persistence, the canonical Flexible Reducing-Balance financial calculator, pure flexible payment allocation rules, and Owner loan quote API to the Python 3.12 FastAPI service. Flutter loan UI, payment posting, and accounting remain deferred.
 
 ## Local setup in WSL
 

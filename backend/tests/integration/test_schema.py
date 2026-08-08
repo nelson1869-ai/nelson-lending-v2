@@ -29,6 +29,7 @@ EXPECTED_TABLES = {
     "borrower_registrations",
     "borrowers",
     "business_settings",
+    "loans",
     "owner_refresh_tokens",
     "owner_users",
 }
@@ -79,7 +80,7 @@ async def test_expected_schema_and_migration_exist(integration_engine: AsyncEngi
         revision = await connection.scalar(text("SELECT version_num FROM alembic_version"))
 
     assert set(tables.scalars()) == EXPECTED_TABLES
-    assert revision == "0004_borrower_activation"
+    assert revision == "0005_loans"
 
 
 async def test_single_active_owner_invariant(db_session: AsyncSession) -> None:
