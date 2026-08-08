@@ -24,6 +24,7 @@ from app.db.types import MONEY_SQL_TYPE, RATE_SQL_TYPE
 
 if TYPE_CHECKING:
     from app.features.borrowers.models import Borrower
+    from app.features.loans.models import Loan
     from app.features.owner_identity.models import OwnerUser
 
 LOAN_REQUEST_STATUSES: Final = ("pending", "approved", "rejected", "cancelled")
@@ -120,3 +121,6 @@ class LoanRequest(TimestampMixin, Base):
 
     borrower: Mapped["Borrower"] = relationship("Borrower", lazy="raise")
     reviewed_by_owner: Mapped["OwnerUser | None"] = relationship("OwnerUser", lazy="raise")
+    loan: Mapped["Loan | None"] = relationship(
+        "Loan", back_populates="loan_request", uselist=False, lazy="raise"
+    )

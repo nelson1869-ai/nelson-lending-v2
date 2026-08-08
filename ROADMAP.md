@@ -210,7 +210,7 @@ never force-pushed or merged without explicit review approval.
 
 ### M11 — Loan Lifecycle
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m11-loan-lifecycle`
 - **Goal:** Model deliberate, auditable loan transitions from draft through terminal outcomes.
 - **Topics to Learn:** State machines; authorization; idempotency; transaction boundaries; audit events; persisted states versus transition timestamps.
@@ -218,7 +218,8 @@ never force-pushed or merged without explicit review approval.
 - **Tests / Quality Gates:** Transition matrix; invalid transitions; concurrency/idempotency; transactional rollback; authorization; audit completeness.
 - **Completion Commit:** Pending
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Exact persisted states versus event timestamps must be decided during this milestone.
+- **Notes / Lessons Learned:** Established durable `Loan` entity (`loans` table) linked 1:1 with approved `LoanRequest` via `loan_request_id` FK and unique index `ix_loans_loan_request_id`. Implemented explicit loan state machine supporting `pending_disbursement` (initial state upon request conversion), `active` (set when Owner confirms disbursement), `cancelled` (set when Owner cancels before disbursement), `paid`, and `defaulted` (schema-supported for future payment milestones). Enforced strict state transition matrix and protected conversion, disbursement, and cancellation endpoints with pessimistic row-locking (`SELECT ... FOR UPDATE OF loans`). Preserved financial precision using `Decimal` / `NUMERIC(14,2)` and `NUMERIC(12,10)` rates. Implemented Owner loan list/detail views (with quote preview) and Borrower own-loan list/detail views with strict cross-borrower and role authorization isolation. Delivered Flutter loan lifecycle experiences for both `owner_mobile` (list, detail with disbursement/cancellation actions, request-to-loan conversion) and `borrower_mobile` (my loans list and contract detail with schedule preview). Passed full quality gates (Alembic migration 0007 upgrade/downgrade, 171 backend tests, Ruff, mypy, Flutter analyze 0 issues, and Flutter test suites).
+
 
 ### M12 — Flexible Payments
 
