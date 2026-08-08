@@ -19,7 +19,7 @@ void main() {
 
       expect(find.text('Request a Loan'), findsOneWidget);
       expect(find.text('Requested Amount (PHP)'), findsOneWidget);
-      expect(find.text('Monthly Rate (%)'), findsOneWidget);
+      expect(find.text('Monthly Rate (%)'), findsNothing);
       expect(find.text('Term (Months)'), findsOneWidget);
       expect(find.text('Payment Frequency'), findsOneWidget);
       expect(find.text('Calculate Quote Preview'), findsOneWidget);

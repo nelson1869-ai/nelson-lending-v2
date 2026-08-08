@@ -6,7 +6,8 @@ import 'package:owner_mobile/features/loan_requests/presentation/owner_loan_requ
 
 void main() {
   group('Owner Loan Requests Review UI Tests', () {
-    testWidgets('OwnerLoanRequestDetailScreen displays borrower details and actions for pending request',
+    testWidgets(
+        'OwnerLoanRequestDetailScreen displays borrower details and actions for pending request',
         (tester) async {
       const quote = OwnerLoanQuotePreviewModel(
         principal: 5000.0,
