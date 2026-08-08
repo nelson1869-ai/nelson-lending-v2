@@ -29,6 +29,7 @@ EXPECTED_TABLES = {
     "borrower_registrations",
     "borrowers",
     "business_settings",
+    "loans",
     "owner_refresh_tokens",
     "owner_users",
 }
