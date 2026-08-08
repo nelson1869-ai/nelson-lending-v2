@@ -186,6 +186,6 @@ def test_twice_monthly_invalid_first_due_date_rejection() -> None:
     for inv_date in invalid_dates:
         with pytest.raises(
             ValueError,
-            match="Twice a Month first due date must be either the 15th or the last calendar day of the month",
+            match="Twice a Month first due date must be either the 15th",
         ):
             build_due_dates(inv_date, "twice_monthly", 2)

@@ -176,4 +176,3 @@ async def test_quote_api_valid_twice_monthly_quote(
     assert data["numberOfPayments"] == 2
     assert data["firstDueDate"] == "2026-09-15"
     assert data["finalDueDate"] == "2026-09-30"
-

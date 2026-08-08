@@ -34,7 +34,8 @@ class LoanQuoteRequest(LoanSchema):
             last_day = calendar.monthrange(self.first_due_date.year, self.first_due_date.month)[1]
             if self.first_due_date.day != 15 and self.first_due_date.day != last_day:
                 raise ValueError(
-                    "Twice a Month first due date must be either the 15th or the last calendar day of the month"
+                    "Twice a Month first due date must be either the 15th "
+                    "or the last calendar day of the month"
                 )
         return self
 

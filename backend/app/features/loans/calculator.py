@@ -138,7 +138,8 @@ def build_due_dates(
 
         if first_due_date.day != 15 and first_due_date.day != last_day:
             raise ValueError(
-                "Twice a Month first due date must be either the 15th or the last calendar day of the month"
+                "Twice a Month first due date must be either the 15th "
+                "or the last calendar day of the month"
             )
 
         current_is_fifteenth = first_due_date.day == 15
