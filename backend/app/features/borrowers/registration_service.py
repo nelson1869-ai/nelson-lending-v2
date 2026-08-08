@@ -16,6 +16,8 @@ from app.features.borrowers.registration_exceptions import (
 from app.features.borrowers.registration_models import BorrowerRegistration
 from app.features.borrowers.registration_schemas import BorrowerRegistrationCreate
 from app.features.borrowers.registration_validation import normalize_philippine_mobile
+from app.features.notifications.constants import TEMPLATE_BORROWER_REGISTRATION_APPROVED
+from app.features.notifications.service import enqueue_notification
 
 IDENTITY_CONFLICT_MESSAGE = (
     "A registration or borrower account already exists for the supplied identity."
@@ -157,6 +159,20 @@ async def approve_registration(
         registration.reviewed_by_owner_user_id = owner_id
         registration.borrower_id = borrower.id
         registration.rejection_reason = None
+        await enqueue_notification(
+            session,
+            event_type="borrower_registration_approved",
+            aggregate_type="borrower",
+            aggregate_id=borrower.id,
+            recipient_type="borrower",
+            recipient_id=borrower.id,
+            template_key=TEMPLATE_BORROWER_REGISTRATION_APPROVED,
+            payload={
+                "borrower_id": str(borrower.id),
+                "first_name": borrower.first_name,
+                "last_name": borrower.last_name,
+            },
+        )
         await session.commit()
         return registration
     except (RegistrationConflict, RegistrationNotFound, RegistrationStateConflict):

@@ -13,6 +13,8 @@ from app.features.accounting.service import post_disbursement_journal
 from app.features.loan_requests.models import LoanRequest
 from app.features.loans.calculator import calculate_quote
 from app.features.loans.models import Loan
+from app.features.notifications.constants import TEMPLATE_LOAN_DISBURSED
+from app.features.notifications.service import enqueue_notification
 
 
 class LoanNotFoundError(Exception):
@@ -125,6 +127,19 @@ async def disburse_loan(
     if loan.next_interest_due_date is None:
         loan.next_interest_due_date = loan.first_due_date
     await post_disbursement_journal(db, loan)
+    await enqueue_notification(
+        db,
+        event_type="loan_disbursed",
+        aggregate_type="loan",
+        aggregate_id=loan.id,
+        recipient_type="borrower",
+        recipient_id=loan.borrower_id,
+        template_key=TEMPLATE_LOAN_DISBURSED,
+        payload={
+            "loan_id": str(loan.id),
+            "original_principal": str(loan.original_principal),
+        },
+    )
     await db.flush()
 
     stmt_updated = select(Loan).options(joinedload(Loan.borrower)).where(Loan.id == loan.id)

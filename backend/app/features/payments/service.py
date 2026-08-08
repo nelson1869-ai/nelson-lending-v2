@@ -17,6 +17,8 @@ from app.features.loans.calculator import (
     quantize_money,
 )
 from app.features.loans.models import Loan
+from app.features.notifications.constants import TEMPLATE_PAYMENT_RECEIVED
+from app.features.notifications.service import enqueue_notification
 from app.features.payments.models import Payment
 from app.features.payments.schemas import PaymentPostRequest
 
@@ -146,6 +148,21 @@ async def post_payment(
 
     try:
         await post_payment_journal(session, payment)
+        await enqueue_notification(
+            session,
+            event_type="payment_received",
+            aggregate_type="payment",
+            aggregate_id=payment.id,
+            recipient_type="borrower",
+            recipient_id=loan.borrower_id,
+            template_key=TEMPLATE_PAYMENT_RECEIVED,
+            payload={
+                "payment_id": str(payment.id),
+                "loan_id": str(loan.id),
+                "amount": str(payment.amount),
+                "payment_date": str(payment.payment_date),
+            },
+        )
         await session.flush()
     except IntegrityError as err:
         # Handle concurrent requests with the exact same idempotency_key safely
