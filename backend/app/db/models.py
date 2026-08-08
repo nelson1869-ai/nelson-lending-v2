@@ -12,6 +12,7 @@ from app.features.business_settings.models import BusinessSetting
 from app.features.loan_requests.models import LoanRequest
 from app.features.loans.models import Loan
 from app.features.owner_identity.models import OwnerRefreshToken, OwnerUser
+from app.features.payments.models import Payment
 
 MODEL_REGISTRY = (
     OwnerUser,
@@ -25,4 +26,5 @@ MODEL_REGISTRY = (
     BusinessSetting,
     Loan,
     LoanRequest,
+    Payment,
 )

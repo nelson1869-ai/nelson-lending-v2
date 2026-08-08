@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
 import '../domain/borrower_loan_models.dart';
+import '../domain/borrower_payment_models.dart';
 
 final borrowerLoansApiClientProvider = Provider<BorrowerLoansApiClient>((ref) {
   final apiClient = ref.watch(apiClientProvider);
@@ -25,5 +26,13 @@ class BorrowerLoansApiClient {
   Future<BorrowerLoanDetailModel> fetchLoanDetail(String id) async {
     final res = await _dio.get('/borrower/loans/$id');
     return BorrowerLoanDetailModel.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<List<BorrowerPaymentModel>> fetchLoanPayments(String loanId) async {
+    final res = await _dio.get('/borrower/loans/$loanId/payments');
+    final list = res.data as List<dynamic>;
+    return list
+        .map((e) => BorrowerPaymentModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

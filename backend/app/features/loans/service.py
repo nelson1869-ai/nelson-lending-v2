@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
@@ -73,12 +74,14 @@ async def create_loan_from_request(
         borrower_id=loan_request.borrower_id,
         original_principal=loan_request.requested_principal,
         outstanding_principal=loan_request.requested_principal,
+        accrued_interest=Decimal("0.00"),
         monthly_rate=loan_request.requested_monthly_rate,
         term_months=loan_request.requested_term_months,
         payment_frequency=loan_request.requested_payment_frequency,
         number_of_payments=quote.number_of_payments,
         first_due_date=loan_request.requested_first_due_date,
         final_due_date=quote.final_due_date,
+        next_interest_due_date=loan_request.requested_first_due_date,
         status="pending_disbursement",
     )
 
@@ -117,6 +120,9 @@ async def disburse_loan(
 
     loan.status = "active"
     loan.disbursed_at = datetime.now(UTC)
+    loan.accrued_interest = Decimal("0.00")
+    if loan.next_interest_due_date is None:
+        loan.next_interest_due_date = loan.first_due_date
     await db.flush()
 
     stmt_updated = select(Loan).options(joinedload(Loan.borrower)).where(Loan.id == loan.id)

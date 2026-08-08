@@ -45,6 +45,7 @@ class BorrowerLoanDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loanAsync = ref.watch(borrowerLoanDetailProvider(loanId));
+    final paymentsAsync = ref.watch(borrowerLoanPaymentsProvider(loanId));
 
     return Scaffold(
       appBar: AppBar(
@@ -141,9 +142,61 @@ class BorrowerLoanDetailScreen extends ConsumerWidget {
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
+                      if (loan.paidAt != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Paid On: ${loan.paidAt}',
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.teal),
+                        ),
+                      ],
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Payment History',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              paymentsAsync.when(
+                data: (payments) {
+                  if (payments.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text('No payments recorded yet.',
+                          style: TextStyle(color: Colors.grey)),
+                    );
+                  }
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('Date')),
+                        DataColumn(label: Text('Amount')),
+                        DataColumn(label: Text('Interest')),
+                        DataColumn(label: Text('Principal')),
+                        DataColumn(label: Text('Balance')),
+                        DataColumn(label: Text('Unapplied')),
+                        DataColumn(label: Text('Reference')),
+                      ],
+                      rows: payments.map((p) {
+                        return DataRow(cells: [
+                          DataCell(Text(p.paymentDate)),
+                          DataCell(Text('₱${p.amount}')),
+                          DataCell(Text('₱${p.interestPaid}')),
+                          DataCell(Text('₱${p.principalPaid}')),
+                          DataCell(Text('₱${p.remainingPrincipal}')),
+                          DataCell(Text('₱${p.unappliedCredit}')),
+                          DataCell(Text(p.reference ?? '-')),
+                        ]);
+                      }).toList(),
+                    ),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Text('Error loading payments: $e'),
               ),
               const SizedBox(height: 16),
               const Text(

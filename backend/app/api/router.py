@@ -21,6 +21,12 @@ from app.features.loans.router import (
     owner_loans_router,
 )
 from app.features.owner_identity.router import router as owner_auth_router
+from app.features.payments.router import (
+    borrower_router as borrower_payments_router,
+)
+from app.features.payments.router import (
+    owner_router as owner_payments_router,
+)
 
 api_router = APIRouter()
 versioned_router = APIRouter()
@@ -33,6 +39,8 @@ versioned_router.include_router(owner_loans_router)
 versioned_router.include_router(borrower_loans_router)
 versioned_router.include_router(borrower_loan_requests_router)
 versioned_router.include_router(owner_loan_requests_router)
+versioned_router.include_router(owner_payments_router)
+versioned_router.include_router(borrower_payments_router)
 
 
 api_router.include_router(health_router)

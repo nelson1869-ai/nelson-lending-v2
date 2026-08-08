@@ -60,6 +60,7 @@ async def test_loan_persistence_success(db_session: AsyncSession) -> None:
         number_of_payments=1,
         first_due_date=date(2026, 9, 7),
         final_due_date=date(2026, 9, 7),
+        next_interest_due_date=date(2026, 9, 7),
         status="pending_disbursement",
     )
     db_session.add(loan)
@@ -87,6 +88,7 @@ async def test_loan_missing_loan_request_id_fails(db_session: AsyncSession) -> N
         number_of_payments=1,
         first_due_date=date(2026, 9, 7),
         final_due_date=date(2026, 9, 7),
+        next_interest_due_date=date(2026, 9, 7),
         status="pending_disbursement",
     )
     db_session.add(loan)
@@ -115,6 +117,7 @@ async def test_loan_duplicate_loan_request_id_fails(db_session: AsyncSession) ->
         number_of_payments=1,
         first_due_date=date(2026, 9, 7),
         final_due_date=date(2026, 9, 7),
+        next_interest_due_date=date(2026, 9, 7),
         status="pending_disbursement",
     )
     db_session.add(loan1)
@@ -131,6 +134,7 @@ async def test_loan_duplicate_loan_request_id_fails(db_session: AsyncSession) ->
         number_of_payments=1,
         first_due_date=date(2026, 9, 7),
         final_due_date=date(2026, 9, 7),
+        next_interest_due_date=date(2026, 9, 7),
         status="pending_disbursement",
     )
     db_session.add(loan2)
@@ -159,6 +163,7 @@ async def test_loan_invalid_principal_constraint(db_session: AsyncSession) -> No
         number_of_payments=1,
         first_due_date=date(2026, 9, 7),
         final_due_date=date(2026, 9, 7),
+        next_interest_due_date=date(2026, 9, 7),
     )
     db_session.add(loan)
     with pytest.raises(IntegrityError, match="original_principal_positive"):
@@ -186,6 +191,7 @@ async def test_loan_invalid_frequency_constraint(db_session: AsyncSession) -> No
         number_of_payments=8,
         first_due_date=date(2026, 9, 7),
         final_due_date=date(2026, 11, 7),
+        next_interest_due_date=date(2026, 9, 7),
     )
     db_session.add(loan)
     with pytest.raises(IntegrityError, match="payment_frequency_valid"):
