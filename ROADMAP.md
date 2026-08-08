@@ -97,7 +97,7 @@ never force-pushed or merged without explicit review approval.
 
 ### M05 — Borrower Registration
 
-- **Status:** Not Started
+- **Status:** In Progress
 - **Branch:** `feature/m05-borrower-registration`
 - **Goal:** Build a validated public registration workflow controlled by Owner approval.
 - **Topics to Learn:** Public input boundaries; Owner approval; validation; phone normalization; duplicate protection; activation-code lifecycle design.
