@@ -53,6 +53,10 @@ class CannotReverseReversalError(AccountingError):
     """Raised when attempting to reverse a reversal transaction."""
 
 
+class BusinessEventJournalReversalError(AccountingError):
+    """Raised when attempting to independently reverse an automatic business-event journal."""
+
+
 async def ensure_system_accounts(db: AsyncSession) -> dict[str, Account]:
     """Ensure system-controlled Chart of Accounts exist in DB and return mapping by code."""
     stmt = select(Account)
@@ -260,6 +264,12 @@ async def reverse_journal(
 
     if journal is None:
         raise JournalNotFoundError(f"Journal transaction '{journal_id}' not found.")
+
+    if journal.event_type in {"loan_disbursement", "payment"}:
+        raise BusinessEventJournalReversalError(
+            f"Automatic '{journal.event_type}' journals cannot be reversed independently of "
+            "their business domain workflow."
+        )
 
     if journal.reversal_of_id is not None:
         raise CannotReverseReversalError("Cannot reverse a reversal transaction.")

@@ -281,7 +281,23 @@ class _JournalsTab extends ConsumerWidget {
                           ),
                         );
                       }),
-                      if (tx.eventType != 'reversal' &&
+                      if (tx.eventType == 'payment' ||
+                          tx.eventType == 'loan_disbursement') ...[
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'System-generated business event (Managed by loan workflow)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ] else if (tx.eventType != 'reversal' &&
                           tx.reversalOfId == null) ...[
                         const SizedBox(height: 12),
                         Align(

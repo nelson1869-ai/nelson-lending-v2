@@ -15,6 +15,7 @@ from app.features.accounting.schemas import (
     JournalTransactionResponse,
 )
 from app.features.accounting.service import (
+    BusinessEventJournalReversalError,
     CannotReverseReversalError,
     JournalAlreadyReversedError,
     JournalNotFoundError,
@@ -146,7 +147,16 @@ async def owner_reverse_journal(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(err),
         ) from err
-    except (CannotReverseReversalError, JournalAlreadyReversedError, UnbalancedJournalError) as err:
+    except (
+        BusinessEventJournalReversalError,
+        CannotReverseReversalError,
+        JournalAlreadyReversedError,
+    ) as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(err),
+        ) from err
+    except UnbalancedJournalError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(err),
