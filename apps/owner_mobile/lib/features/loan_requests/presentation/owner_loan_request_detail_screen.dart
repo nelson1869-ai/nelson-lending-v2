@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../loans/presentation/owner_loans_controller.dart';
 import '../domain/owner_loan_request_models.dart';
 import 'owner_loan_requests_controller.dart';
 
@@ -267,6 +268,40 @@ class _OwnerLoanRequestDetailScreenState
                         style: TextStyle(color: Colors.blue.shade900),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ],
+            if (req.status == 'approved') ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: state.isLoading
+                      ? null
+                      : () async {
+                          final loan = await ref
+                              .read(ownerLoansControllerProvider.notifier)
+                              .createLoanFromRequest(req.id);
+                          if (context.mounted && loan != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content:
+                                    Text('Loan contract created successfully!'),
+                              ),
+                            );
+                            Navigator.pop(context);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  icon: const Icon(Icons.add_task),
+                  label: const Text(
+                    'Create Loan',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ),
