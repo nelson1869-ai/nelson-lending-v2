@@ -3,17 +3,17 @@ set -e
 
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="${PROJECT_ROOT}/backend"
+OWNER_APP_DIR="${PROJECT_ROOT}/apps/owner_mobile"
 PYTHON_BIN="${BACKEND_DIR}/.venv/bin/python"
 
 echo "=========================================="
 echo " Starting Lending Nelson V2 Application"
 echo "=========================================="
 
-echo "[1/4] Stopping existing processes on port 8000..."
+echo "[1/5] Stopping existing backend processes..."
 if command -v fuser >/dev/null 2>&1; then
     fuser -k 8000/tcp >/dev/null 2>&1 || true
 fi
-
 pkill -f "uvicorn app.main:app" >/dev/null 2>&1 || true
 sleep 1
 
@@ -23,17 +23,17 @@ if [ ! -x "$PYTHON_BIN" ]; then
     exit 1
 fi
 
-echo "[2/4] Applying Alembic database migrations..."
+echo "[2/5] Applying Alembic database migrations..."
 cd "$BACKEND_DIR"
 "$PYTHON_BIN" -m alembic upgrade head
 
-echo "[3/4] Starting FastAPI backend on http://0.0.0.0:8000..."
+echo "[3/5] Starting FastAPI backend on http://0.0.0.0:8000..."
 nohup "$PYTHON_BIN" -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload > uvicorn.log 2>&1 &
 BACKEND_PID=$!
 
 echo "Backend started with PID: ${BACKEND_PID} (Logs: ${BACKEND_DIR}/uvicorn.log)"
 
-echo "[4/4] Verifying backend liveness..."
+echo "[4/5] Verifying backend liveness..."
 for i in {1..10}; do
     if curl -s http://127.0.0.1:8000/health/live >/dev/null; then
         echo "✓ Backend is live and responding at http://127.0.0.1:8000"
@@ -42,10 +42,22 @@ for i in {1..10}; do
     sleep 1
 done
 
+echo "[5/5] Checking Android Emulator & Launching Owner App..."
+# Check for active Android device/emulator
+if flutter.bat devices 2>/dev/null | grep -i "android" >/dev/null || flutter devices 2>/dev/null | grep -i "android" >/dev/null; then
+    echo "✓ Android device/emulator detected."
+else
+    echo "Starting Android emulator (Small_Phone)..."
+    flutter.bat emulators --launch Small_Phone >/dev/null 2>&1 || flutter emulators --launch Small_Phone >/dev/null 2>&1 &
+    sleep 5
+fi
+
 echo ""
 echo "=========================================="
 echo " Lending Nelson V2 Ready!"
 echo " - Backend API:  http://127.0.0.1:8000/api/v1"
 echo " - Health Probe: http://127.0.0.1:8000/health/ready"
-echo " - Owner App:    cd apps/owner_mobile && flutter run"
 echo "=========================================="
+echo "Launching Owner Mobile Application on Android..."
+cd "$OWNER_APP_DIR"
+flutter.bat run -d android --dart-define=API_BASE_URL=http://10.0.2.2:8000 || flutter run -d android --dart-define=API_BASE_URL=http://10.0.2.2:8000
