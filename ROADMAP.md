@@ -114,20 +114,20 @@ never force-pushed or merged without explicit review approval.
 
 ### M06 — Borrower Authentication & Activation
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m06-borrower-auth`
 - **Goal:** Activate approved borrowers and provide authentication fully isolated from Owner sessions.
 - **Topics to Learn:** Activation codes; PIN hashing; borrower JWTs; refresh-token rotation; device registration; trusted devices; account and borrower isolation.
 - **Deliverables:** Added HMAC-protected six-digit activation codes with Owner-only issuance, expiry, reissue revocation, attempt limits, and single use; six-digit Argon2id PIN activation; typed Borrower access JWTs; canonical Borrower auth context; hashed device identifiers; device-bound opaque refresh sessions with row-locked rotation and logout.
 - **Tests / Quality Gates:** FastAPI import, Ruff, Ruff format, and mypy passed; full pytest passed 119 tests; real PostgreSQL M06 lifecycle passed 24 tests; activation and refresh concurrency each allowed exactly one winner; `0004_borrower_activation` downgrade/re-upgrade and fresh-install chains passed; Alembic reports one head and no drift; redacted local API lifecycle smoke passed with exact cleanup.
-- **Educational Commits:**
+- **Completion Commits:**
   - `ab00e61` — `docs: align m06 learning branch`
   - `f676e8f` — `feat(auth): add borrower activation foundation`
   - `83cec1c` — `feat(auth): implement borrower authentication`
   - `2b03531` — `test(auth): cover borrower activation and session lifecycle`
-- **Completion Commit:** Pending review and merge
-- **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Registration approval creates a pre-activation account; activation consumes a short-lived HMAC-protected code and establishes an Argon2id PIN; login alone creates access and refresh credentials. Human PINs require slow password hashing, while random refresh tokens use deterministic SHA-256 lookup hashes and device identifiers use keyed HMAC. Owner and Borrower JWT domains reject one another by token type. Account and token row locks make activation and refresh single-use under concurrency. Borrower identity always comes from authenticated session context, never a request-selected borrower ID. Code delivery, PIN recovery, distributed login throttling, device trust policy, Flutter, and lending remain deferred.
+  - `01d3f8e` — `docs: mark m06 ready for review`
+- **Merge Commit:** `456f53a148b7a6f7ec8365751c4f06b9ee073ac1` — `merge: complete m06 borrower authentication`
+- **Notes / Lessons Learned:** Registration approval is distinct from activation, and activation is distinct from authentication. Human PIN secrets use Argon2id hashing, while low-entropy 6-digit activation codes use account-bound HMAC hashes at rest, and high-entropy refresh tokens use SHA-256 lookup hashes. Owner access JWTs and Borrower access JWTs enforce `token_type` domain isolation and reject one another. `SELECT FOR UPDATE` protects against concurrent activation attempts and concurrent refresh token reuse. Device identifier hashing and device-bound refresh sessions enable safe multi-device token rotation. Generic authentication failure responses prevent username/phone enumeration, and raw secrets are minimized in logs and database storage.
 
 ## Phase C — Flutter Foundations
 
