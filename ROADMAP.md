@@ -70,6 +70,7 @@ never force-pushed or merged without explicit review approval.
   - `f7801f3` — `feat(db): add identity and borrower models`
   - `55d785a` — `feat(db): add initial identity schema migration`
   - `a73a8c2` — `test(db): add PostgreSQL schema integration tests`
+  - `4aed4a9` — `docs: mark m03 ready for review`
 - **Completion Commit:** Pending review and merge
 - **Merge Commit:** Pending
 - **Notes / Lessons Learned:** Inspecting before reset exposed an older migration in both named databases, so only those two local project databases were recreated. Unique and CHECK constraints protect identity invariants, a partial unique index permits zero or one active Owner, and the token device/account composite FK prevents cross-account device references. Borrower deletion is restricted while account/device/token cleanup uses deliberate cascades. Integration tests use a dedicated exact-name loopback database, rollback each case, and remain distinct from mocked health tests. M03 is ready for review but not merged.
