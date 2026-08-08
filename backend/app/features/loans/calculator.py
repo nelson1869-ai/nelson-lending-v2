@@ -30,6 +30,59 @@ class ScheduleItem:
 
 
 @dataclass(frozen=True)
+class PaymentAllocationResult:
+    """Pure allocation result of a flexible borrower payment."""
+
+    interest_paid: Decimal
+    principal_paid: Decimal
+    unapplied_credit: Decimal
+    remaining_interest: Decimal
+    remaining_principal: Decimal
+
+
+def allocate_payment(
+    amount: Decimal,
+    interest_due: Decimal,
+    outstanding_principal: Decimal,
+) -> PaymentAllocationResult:
+    """Allocate payment interest-first, then principal, then unapplied credit.
+
+    Preserves Flexible Reducing-Balance rules:
+    - Payment first satisfies accrued/due interest.
+    - Any remaining payment reduces outstanding principal.
+    - Future interest will be calculated on the lower remaining principal.
+    - Overpayments beyond principal become unapplied credit.
+    """
+    if amount <= Decimal("0"):
+        raise ValueError("payment amount must be greater than zero")
+    if interest_due < Decimal("0"):
+        raise ValueError("interest_due cannot be negative")
+    if outstanding_principal < Decimal("0"):
+        raise ValueError("outstanding_principal cannot be negative")
+
+    amount_q = quantize_money(amount)
+    interest_due_q = quantize_money(interest_due)
+    principal_q = quantize_money(outstanding_principal)
+
+    interest_paid = min(amount_q, interest_due_q)
+    remaining_after_interest = amount_q - interest_paid
+
+    principal_paid = min(remaining_after_interest, principal_q)
+    unapplied_credit = remaining_after_interest - principal_paid
+
+    remaining_interest = interest_due_q - interest_paid
+    remaining_principal = principal_q - principal_paid
+
+    return PaymentAllocationResult(
+        interest_paid=quantize_money(interest_paid),
+        principal_paid=quantize_money(principal_paid),
+        unapplied_credit=quantize_money(unapplied_credit),
+        remaining_interest=quantize_money(remaining_interest),
+        remaining_principal=quantize_money(remaining_principal),
+    )
+
+
+@dataclass(frozen=True)
 class LoanQuote:
     """Stateless summary of a calculated loan quote."""
 
