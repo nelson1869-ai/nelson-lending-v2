@@ -247,15 +247,36 @@ never force-pushed or merged without explicit review approval.
 
 ### M13 — Double-Entry Accounting
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m13-double-entry-accounting`
 - **Goal:** Represent every financial movement with balanced, transactional journal entries.
 - **Topics to Learn:** Chart of accounts; journals; debit/credit; balanced transactions; disbursement/payment accounting; reversals; financial integrity.
-- **Deliverables:** Accounts and journal schema; posting service; disbursement/payment/reversal mappings; balance validation.
-- **Tests / Quality Gates:** Debits equal credits; rollback on posting failure; immutable audit trail; reversal correctness; Decimal-only values.
+- **Deliverables:**
+  - Standard Chart of Accounts (`1000 Cash`, `1100 Loans Receivable`, `2000 Customer Credit`, `4000 Interest Income`).
+  - PostgreSQL ORM models (`Account`, `JournalTransaction`, `JournalEntry`) with database check constraints (`ck_account_type`, `ck_account_normal_balance`, `uq_journal_transactions_source`, `ck_no_self_reversal`, `ck_entry_non_negative`, `ck_entry_one_sided`).
+  - Canonical accounting service (`post_journal`, `post_disbursement_journal`, `post_payment_journal`, `reverse_journal`, `list_accounts`, `list_journals`, `get_journal_detail`).
+  - Atomic transaction integration into `disburse_loan` and `post_payment`.
+  - Owner REST APIs under `/api/v1/owner/accounting`.
+  - Owner Mobile Flutter UI for General Ledger & Chart of Accounts.
+  - Reversible Alembic migration `0011_accounting.py`.
+  - Comprehensive unit and integration test suite.
+  - Domain documentation (`docs/domain/ACCOUNTING_RULES.md`).
+- **Tests / Quality Gates:**
+  - Backend `pytest`: 223 passed (100% pass rate).
+  - `ruff check`: 0 errors.
+  - `ruff format`: 106 files clean.
+  - `mypy`: 0 issues across 62 source files.
+  - `alembic current` & `heads`: `0011_accounting (head)`.
+  - `alembic check`: No changes in schema detected (zero drift).
+  - Owner Mobile `flutter analyze`: 0 issues found.
+  - Owner Mobile `flutter test`: 24 passed (100% pass rate).
+  - Owner Mobile debug APK: Built cleanly (`build\app\outputs\flutter-apk\app-debug.apk`).
+  - Borrower Mobile `flutter analyze`: 0 issues found.
+  - Borrower Mobile `flutter test`: 27 passed (100% pass rate).
+  - Borrower Mobile debug APK: Built cleanly (`build\app\outputs\flutter-apk\app-debug.apk`).
 - **Completion Commit:** Pending
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Notes / Lessons Learned:** Double-entry accounting ensures append-only financial audit trails. Every disbursement and payment mutation generates a balanced transaction (`SUM(debit) == SUM(credit)`) within the same database transaction. Corrections are performed via compensating reversals rather than deleting or mutating past records. Automatic business event journals use source-based deduplication `(event_type, source_id)` to ensure idempotency.
 
 ### M14 — Notifications & Outbox
 

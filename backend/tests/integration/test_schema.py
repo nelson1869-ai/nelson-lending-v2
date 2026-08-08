@@ -21,6 +21,7 @@ from app.features.owner_identity.models import OwnerUser
 pytestmark = pytest.mark.integration
 
 EXPECTED_TABLES = {
+    "accounts",
     "alembic_version",
     "borrower_accounts",
     "borrower_activation_codes",
@@ -29,6 +30,8 @@ EXPECTED_TABLES = {
     "borrower_registrations",
     "borrowers",
     "business_settings",
+    "journal_entries",
+    "journal_transactions",
     "loan_requests",
     "loans",
     "owner_refresh_tokens",
@@ -82,7 +85,7 @@ async def test_expected_schema_and_migration_exist(integration_engine: AsyncEngi
         revision = await connection.scalar(text("SELECT version_num FROM alembic_version"))
 
     assert set(tables.scalars()) == EXPECTED_TABLES
-    assert revision == "0010_m12_accrual_periods"
+    assert revision == "0011_accounting"
 
 
 async def test_single_active_owner_invariant(db_session: AsyncSession) -> None:
