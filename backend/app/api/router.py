@@ -4,6 +4,9 @@ from fastapi import APIRouter
 
 from app.api.health import router as health_router
 from app.core.config import get_settings
+from app.features.accounting.router import (
+    owner_router as owner_accounting_router,
+)
 from app.features.borrowers.auth_router import borrower_router as borrower_auth_router
 from app.features.borrowers.auth_router import owner_router as owner_activation_router
 from app.features.borrowers.registration_router import (
@@ -41,6 +44,7 @@ versioned_router.include_router(borrower_loan_requests_router)
 versioned_router.include_router(owner_loan_requests_router)
 versioned_router.include_router(owner_payments_router)
 versioned_router.include_router(borrower_payments_router)
+versioned_router.include_router(owner_accounting_router)
 
 
 api_router.include_router(health_router)

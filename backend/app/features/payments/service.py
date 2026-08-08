@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.features.accounting.service import post_payment_journal
 from app.features.loans.calculator import (
     advance_due_date,
     allocate_payment,
@@ -144,6 +145,7 @@ async def post_payment(
         loan.paid_at = now
 
     try:
+        await post_payment_journal(session, payment)
         await session.flush()
     except IntegrityError as err:
         # Handle concurrent requests with the exact same idempotency_key safely

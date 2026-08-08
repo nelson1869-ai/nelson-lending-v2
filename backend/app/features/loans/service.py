@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.features.accounting.service import post_disbursement_journal
 from app.features.loan_requests.models import LoanRequest
 from app.features.loans.calculator import calculate_quote
 from app.features.loans.models import Loan
@@ -123,6 +124,7 @@ async def disburse_loan(
     loan.accrued_interest = Decimal("0.00")
     if loan.next_interest_due_date is None:
         loan.next_interest_due_date = loan.first_due_date
+    await post_disbursement_journal(db, loan)
     await db.flush()
 
     stmt_updated = select(Loan).options(joinedload(Loan.borrower)).where(Loan.id == loan.id)
