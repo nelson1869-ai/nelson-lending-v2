@@ -23,6 +23,12 @@ from app.features.loans.router import (
     borrower_loans_router,
     owner_loans_router,
 )
+from app.features.notifications.router import (
+    borrower_router as borrower_notifications_router,
+)
+from app.features.notifications.router import (
+    owner_router as owner_notifications_router,
+)
 from app.features.owner_identity.router import router as owner_auth_router
 from app.features.payments.router import (
     borrower_router as borrower_payments_router,
@@ -38,14 +44,15 @@ versioned_router.include_router(owner_borrower_registration_router)
 versioned_router.include_router(owner_auth_router)
 versioned_router.include_router(owner_activation_router)
 versioned_router.include_router(borrower_auth_router)
-versioned_router.include_router(owner_loans_router)
-versioned_router.include_router(borrower_loans_router)
 versioned_router.include_router(borrower_loan_requests_router)
 versioned_router.include_router(owner_loan_requests_router)
+versioned_router.include_router(owner_loans_router)
+versioned_router.include_router(borrower_loans_router)
 versioned_router.include_router(owner_payments_router)
 versioned_router.include_router(borrower_payments_router)
 versioned_router.include_router(owner_accounting_router)
-
+versioned_router.include_router(borrower_notifications_router)
+versioned_router.include_router(owner_notifications_router)
 
 api_router.include_router(health_router)
 api_router.include_router(versioned_router, prefix=get_settings().api_v1_prefix)
