@@ -12,7 +12,7 @@ class AppConfig {
       'API_BASE_URL',
       defaultValue: 'http://10.0.2.2:8000',
     );
-    return AppConfig(apiBaseUrl: baseUrl);
+    return const AppConfig(apiBaseUrl: baseUrl);
   }
 }
 

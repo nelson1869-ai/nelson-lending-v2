@@ -158,8 +158,9 @@ class _ActivationScreenState extends ConsumerState<ActivationScreen> {
               counterText: '',
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty)
+              if (v == null || v.trim().isEmpty) {
                 return 'Activation code is required';
+              }
               if (!RegExp(r'^\d{6}$').hasMatch(v.trim())) {
                 return 'Code must be exactly 6 digits';
               }
@@ -203,8 +204,9 @@ class _ActivationScreenState extends ConsumerState<ActivationScreen> {
               counterText: '',
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty)
+              if (v == null || v.trim().isEmpty) {
                 return 'Please confirm your PIN';
+              }
               if (v.trim() != _pinController.text.trim()) {
                 return 'PINs do not match';
               }
