@@ -1,10 +1,10 @@
 # Lending Nelson V2
 
-> **Status: M02 — Backend Foundation**
+> **Status: M03 — PostgreSQL & Database Foundation**
 
 Lending Nelson V2 is a production-quality lending platform in incremental development and a
-structured full-stack learning journey. M02 establishes the backend infrastructure and quality
-tooling only; business features are not implemented yet.
+structured full-stack learning journey. M03 establishes the first PostgreSQL identity and
+business-settings schema; authentication and lending behavior are not implemented yet.
 
 The target system has four core components:
 

@@ -59,7 +59,7 @@ never force-pushed or merged without explicit review approval.
 
 ### M03 — PostgreSQL & Database Foundation
 
-- **Status:** Not Started
+- **Status:** In Progress
 - **Branch:** `feature/m03-database-foundation`
 - **Goal:** Create the first persistent identity and business-settings schema on real local PostgreSQL.
 - **Topics to Learn:** PostgreSQL; SQLAlchemy ORM; relationships; constraints; indexes; UUIDs; `NUMERIC` and `Decimal`; Alembic migrations; integration-test isolation.

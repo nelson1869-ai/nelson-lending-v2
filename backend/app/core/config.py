@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     app_name: str = "Lending Nelson V2 API"
     api_v1_prefix: str = "/api/v1"
     database_url: PostgresDsn = PostgresDsn(LOCAL_DATABASE_URL)
+    test_database_url: PostgresDsn | None = None
     log_level: str = "INFO"
 
     @field_validator("api_v1_prefix")
