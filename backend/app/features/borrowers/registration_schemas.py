@@ -56,3 +56,39 @@ class BorrowerRegistrationResponse(RegistrationSchema):
     status: str
     submitted_at: datetime
     message: str
+
+
+class BorrowerRegistrationOwnerResponse(RegistrationSchema):
+    id: UUID
+    first_name: str
+    last_name: str
+    national_id: str
+    phone_number: str
+    phone_number_normalized: str
+    address: str
+    date_of_birth: date
+    status: str
+    submitted_at: datetime
+    reviewed_at: datetime | None
+    reviewed_by_owner_user_id: UUID | None
+    borrower_id: UUID | None
+    rejection_reason: str | None
+
+
+class BorrowerRegistrationListResponse(RegistrationSchema):
+    items: list[BorrowerRegistrationOwnerResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class BorrowerRegistrationRejectRequest(RegistrationSchema):
+    reason: str = Field(min_length=10, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def validate_reason(cls, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) < 10:
+            raise ValueError("Rejection reason must contain at least 10 characters")
+        return normalized
