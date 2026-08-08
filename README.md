@@ -1,10 +1,11 @@
 # Lending Nelson V2
 
-> **Status: M03 — PostgreSQL & Database Foundation**
+> **Status: M04 — Secure Owner Authentication**
 
 Lending Nelson V2 is a production-quality lending platform in incremental development and a
-structured full-stack learning journey. M03 establishes the first PostgreSQL identity and
-business-settings schema; authentication and lending behavior are not implemented yet.
+structured full-stack learning journey. M04 adds secure one-time Owner bootstrap, Argon2id
+credentials, short-lived Owner access JWTs, and rotated hashed refresh sessions. Borrower
+authentication and lending behavior remain future milestones.
 
 The target system has four core components:
 

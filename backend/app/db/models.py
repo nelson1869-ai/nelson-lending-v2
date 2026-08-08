@@ -7,10 +7,11 @@ from app.features.borrowers.models import (
     BorrowerRefreshToken,
 )
 from app.features.business_settings.models import BusinessSetting
-from app.features.owner_identity.models import OwnerUser
+from app.features.owner_identity.models import OwnerRefreshToken, OwnerUser
 
 MODEL_REGISTRY = (
     OwnerUser,
+    OwnerRefreshToken,
     Borrower,
     BorrowerAccount,
     BorrowerDevice,

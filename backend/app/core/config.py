@@ -7,6 +7,7 @@ from pydantic import PostgresDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LOCAL_DATABASE_URL = "postgresql+asyncpg://lending_v2:lending_v2@127.0.0.1:5432/lending_nelson_v2"
+LOCAL_JWT_SECRET = "change-me-for-local-development-use-a-random-secret"
 
 
 class Settings(BaseSettings):
@@ -25,6 +26,10 @@ class Settings(BaseSettings):
     database_url: PostgresDsn = PostgresDsn(LOCAL_DATABASE_URL)
     test_database_url: PostgresDsn | None = None
     log_level: str = "INFO"
+    jwt_secret_key: str = LOCAL_JWT_SECRET
+    jwt_algorithm: Literal["HS256"] = "HS256"
+    owner_access_token_minutes: int = 15
+    owner_refresh_token_days: int = 30
 
     @field_validator("api_v1_prefix")
     @classmethod
@@ -44,11 +49,19 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def reject_local_database_in_deployed_environments(self) -> "Settings":
-        if (
-            self.app_env in {"staging", "production"}
-            and str(self.database_url) == LOCAL_DATABASE_URL
-        ):
-            raise ValueError("DATABASE_URL must be explicitly configured outside local development")
+        if self.app_env in {"staging", "production"}:
+            if str(self.database_url) == LOCAL_DATABASE_URL:
+                raise ValueError(
+                    "DATABASE_URL must be explicitly configured outside local development"
+                )
+            if self.jwt_secret_key == LOCAL_JWT_SECRET or len(self.jwt_secret_key) < 32:
+                raise ValueError(
+                    "JWT_SECRET_KEY must be an explicit random secret of at least 32 characters"
+                )
+        if self.owner_access_token_minutes < 1:
+            raise ValueError("OWNER_ACCESS_TOKEN_MINUTES must be positive")
+        if self.owner_refresh_token_days < 1:
+            raise ValueError("OWNER_REFRESH_TOKEN_DAYS must be positive")
         return self
 
 

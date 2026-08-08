@@ -64,7 +64,11 @@ flowchart TB
 - Borrower-scoped operations resolve borrower identity from verified session claims, not from an
   untrusted request body identifier.
 - Cross-borrower access is denied even when a caller knows another record's identifier.
-- Authentication details are introduced in later milestones and are not implemented in M01.
+- M04 implements the Owner boundary as a one-time non-public CLI bootstrap, salted Argon2id
+  credential, short-lived `owner_access` JWT, and hashed opaque refresh session with rotation and
+  revocation. The canonical Owner dependency validates the token type and active database record.
+- Borrower authentication remains a separate future M06 boundary and cannot use Owner claims or
+  dependencies.
 
 ## 4. Target Monorepo Structure
 

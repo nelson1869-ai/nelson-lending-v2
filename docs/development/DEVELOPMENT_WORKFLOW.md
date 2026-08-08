@@ -176,6 +176,20 @@ tests.
 Database milestones additionally test migration from zero, downgrade/re-upgrade, constraints, and
 model behavior against a dedicated local PostgreSQL test database.
 
+M04 Owner authentication adds focused security tests plus real PostgreSQL lifecycle tests:
+
+```bash
+.venv/bin/python -m pytest tests/test_security.py
+.venv/bin/python -m pytest tests/integration/test_owner_auth.py -v
+.venv/bin/python scripts/bootstrap_owner.py --username nelson
+```
+
+The bootstrap command prompts for the password without echo. Never pass passwords or bearer tokens
+on a command line, store them in test output, or commit them. Integration tests override only the
+database dependency and continue to use the guarded `lending_nelson_v2_test` database. Login rate
+limiting remains a production-hardening decision rather than introducing Redis or a misleading
+single-process limiter in M04.
+
 ### Local PostgreSQL workflow
 
 M03 uses PostgreSQL only on `127.0.0.1:5432`, with `lending_nelson_v2` for development and the
