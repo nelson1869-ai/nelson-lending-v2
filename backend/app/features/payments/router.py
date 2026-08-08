@@ -47,15 +47,20 @@ async def owner_post_payment(
     Returns HTTP 201 for a newly created payment, or HTTP 200 when the request is
     an idempotent replay of an existing payment (same idempotency key + same payload).
     """
-    effective_key = (idempotency_key or payload.idempotency_key or "").strip()
-    if not effective_key:
+    if idempotency_key is None or not idempotency_key.strip():
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Idempotency-Key header is required for payment posting.",
         )
 
-    payload.idempotency_key = effective_key
-    payment, was_replayed = await post_payment(db, loan_id, payload)
+    clean_key = idempotency_key.strip()
+    if len(clean_key) > 128:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Idempotency-Key header must not exceed 128 characters.",
+        )
+
+    payment, was_replayed = await post_payment(db, loan_id, payload, clean_key)
     if was_replayed:
         response.status_code = status.HTTP_200_OK
     return PaymentResponse.model_validate(payment)

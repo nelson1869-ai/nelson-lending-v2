@@ -62,7 +62,6 @@ class OwnerLoansApiClient {
       'paymentDate': paymentDate,
       if (reference != null && reference.isNotEmpty) 'reference': reference,
       if (note != null && note.isNotEmpty) 'note': note,
-      'idempotencyKey': key,
     };
     final res = await _dio.post(
       '/owner/loans/$loanId/payments',

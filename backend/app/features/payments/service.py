@@ -24,8 +24,10 @@ async def post_payment(
     session: AsyncSession,
     loan_id: UUID,
     payload: PaymentPostRequest,
+    idempotency_key: str,
 ) -> tuple[Payment, bool]:
     """Atomically record a payment against an active loan and update balances."""
+    key = idempotency_key.strip()
     result = await session.execute(select(Loan).where(Loan.id == loan_id).with_for_update())
     loan = result.scalar_one_or_none()
 
@@ -42,12 +44,11 @@ async def post_payment(
         )
 
     # --- Idempotency check (before any mutation or status check for paid) ---
-    if payload.idempotency_key is not None and payload.idempotency_key.strip():
-        existing = await _find_idempotent_payment(session, loan_id, payload.idempotency_key)
-        if existing is not None:
-            # Verify the prior request matches; conflict → 409.
-            _assert_idempotency_match(existing, payload)
-            return existing, True
+    existing = await _find_idempotent_payment(session, loan_id, key)
+    if existing is not None:
+        # Verify the prior request matches; conflict → 409.
+        _assert_idempotency_match(existing, payload)
+        return existing, True
 
     if loan.status == "paid":
         raise HTTPException(
@@ -127,7 +128,7 @@ async def post_payment(
         updated_at=now,
         reference=payload.reference,
         note=payload.note,
-        idempotency_key=payload.idempotency_key,
+        idempotency_key=key,
     )
 
     session.add(payment)
@@ -146,12 +147,11 @@ async def post_payment(
         await session.flush()
     except IntegrityError as err:
         # Handle concurrent requests with the exact same idempotency_key safely
-        if payload.idempotency_key is not None:
-            await session.rollback()
-            existing = await _find_idempotent_payment(session, loan_id, payload.idempotency_key)
-            if existing is not None:
-                _assert_idempotency_match(existing, payload)
-                return existing, True
+        await session.rollback()
+        existing = await _find_idempotent_payment(session, loan_id, key)
+        if existing is not None:
+            _assert_idempotency_match(existing, payload)
+            return existing, True
         raise err
 
     return payment, False
