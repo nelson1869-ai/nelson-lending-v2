@@ -247,7 +247,7 @@ never force-pushed or merged without explicit review approval.
 
 ### M13 — Double-Entry Accounting
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m13-double-entry-accounting`
 - **Goal:** Represent every financial movement with balanced, transactional journal entries.
 - **Topics to Learn:** Chart of accounts; journals; debit/credit; balanced transactions; disbursement/payment accounting; reversals; financial integrity.
@@ -262,7 +262,7 @@ never force-pushed or merged without explicit review approval.
   - Comprehensive unit and integration test suite.
   - Domain documentation (`docs/domain/ACCOUNTING_RULES.md`).
 - **Tests / Quality Gates:**
-  - Backend `pytest`: 223 passed (100% pass rate).
+  - Backend `pytest`: 225 passed (100% pass rate).
   - `ruff check`: 0 errors.
   - `ruff format`: 106 files clean.
   - `mypy`: 0 issues across 62 source files.
@@ -274,9 +274,17 @@ never force-pushed or merged without explicit review approval.
   - Borrower Mobile `flutter analyze`: 0 issues found.
   - Borrower Mobile `flutter test`: 27 passed (100% pass rate).
   - Borrower Mobile debug APK: Built cleanly (`build\app\outputs\flutter-apk\app-debug.apk`).
-- **Completion Commit:** Pending
-- **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Double-entry accounting ensures append-only financial audit trails. Every disbursement and payment mutation generates a balanced transaction (`SUM(debit) == SUM(credit)`) within the same database transaction. Corrections are performed via compensating reversals rather than deleting or mutating past records. Automatic business event journals use source-based deduplication `(event_type, source_id)` to ensure idempotency.
+- **Merge Commit:** `ff124b6a1a30df66b324539cd0893db9e4759de9`
+- **Educational Commits:**
+  - `47e68c2`: feat(accounting): add double-entry models, schema migration, and canonical service
+  - `76e2e90`: feat(accounting): integrate accounting posting with disbursements and payments
+  - `0612682`: test(accounting): add double-entry models, service, disbursement, payment, and API tests
+  - `4d9f22a`: feat(owner_mobile): add double-entry general ledger UI and API client
+  - `ff06dbf`: docs(roadmap): mark m13 ready for review
+  - `2045eb4`: fix(accounting): protect business-event journals from generic reversal
+  - `43e23d6`: test(accounting): cover protected business-event reversal integrity
+  - `47137b1`: docs(accounting): document business-event reversal boundaries
+- **Notes / Lessons Learned:** Double-entry accounting ensures append-only financial audit trails where every transaction satisfies `SUM(debit) == SUM(credit)` using Python `Decimal` and PostgreSQL `NUMERIC`. Loan disbursements post `DR 1100 Loans Receivable` / `CR 1000 Cash`. Payment allocation uses authoritative M12 backend allocation (`Interest Income` for interest, `Loans Receivable` for principal, `Customer Credit` liability for excess unapplied credit). Every payment and disbursement mutation is committed atomically with its journal transaction. Replaying idempotent payments does not duplicate journals or balances. Automatic business events (`loan_disbursement` and `payment`) cannot be independently reversed via generic accounting reversal endpoints (`BusinessEventJournalReversalError` / `HTTP 409 Conflict`), ensuring business domain state and accounting general ledger never diverge. Reversing a financial business event requires an authoritative business-domain workflow that updates both domain entities and ledgers atomically. Borrowers are strictly forbidden from accessing accounting records.
 
 ### M14 — Notifications & Outbox
 
