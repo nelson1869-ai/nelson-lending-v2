@@ -233,15 +233,15 @@ never force-pushed or merged without explicit review approval.
 
 ### M12 — Flexible Payments
 
-- **Status:** Not Started
+- **Status:** Completed
 - **Branch:** `feature/m12-flexible-payments`
 - **Goal:** Record flexible payments with authoritative interest-first allocation and principal reduction.
 - **Topics to Learn:** Payment recording; interest-first allocation; partial and early payments; late/on-time classification; balances; receipts; idempotency.
 - **Deliverables:** Canonical payment allocation service; payment and receipt persistence; balance updates; reversal-ready audit data.
 - **Tests / Quality Gates:** ₱2,000/₱200 examples for ₱200 and ₱700 payments; future interest on reduced principal; rounding; duplicate prevention; atomic rollback.
-- **Completion Commit:** Pending
-- **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Backend results are authoritative for allocation, balances, schedules, and totals.
+- **Completion Commit:** `30edb15999ad5241533cfe47db0103802dc019e1`
+- **Merge Commit:** `6b65adb25c689b3a420beada07daf748c66c9406`
+- **Notes / Lessons Learned:** Payment posting is an immutable financial operation. Payments allocate strictly: accrued interest → outstanding principal → unapplied credit. Interest accrues by contractual due date arrival (`payment_date >= next_interest_due_date`), NOT per payment request event. Multiple payments within the same contractual period do not double-accrue interest. Future period interest is calculated strictly on reduced outstanding principal. Early payoff satisfies remaining principal and current accrued interest, excluding future unaccrued scheduled interest. `payment_date` is the business-effective date (must not be in the future, predate disbursement, or be backdated). `posted_at` is the server recording timestamp. Payment posting requires mandatory `Idempotency-Key` passed as an HTTP header (key in JSON body is forbidden via `extra="forbid"`). Retries with identical key and payload return `200 OK` with original payment without double-mutating balances or status. Retries with conflicting payload return `409 Conflict`. Database composite unique index `uq_payments_loan_idempotency_key` and pessimistic row-locking (`SELECT ... FOR UPDATE`) protect against concurrent race conditions. Borrower payment responses hide Owner internal notes and operational `idempotency_key` metadata. Payment posting is decoupled from general-ledger accounting (owned by M13).
 
 ## Phase E — Financial Infrastructure
 
