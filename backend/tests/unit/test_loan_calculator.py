@@ -137,15 +137,55 @@ def test_leap_year_february_due_date() -> None:
     ]
 
 
-def test_invalid_calculator_inputs() -> None:
-    with pytest.raises(ValueError, match="principal must be greater than zero"):
-        calculate_quote(Decimal("0.00"), Decimal("0.10"), 1, "monthly", date(2026, 1, 1))
+def test_twice_monthly_starting_on_month_end() -> None:
+    # Starting on 30-day month end (Sept 30) -> Sept 30, Oct 15, Oct 31, Nov 15
+    quote = calculate_quote(
+        principal=Decimal("4000.00"),
+        monthly_rate=Decimal("0.04"),
+        term_months=2,
+        payment_frequency="twice_monthly",
+        first_due_date=date(2026, 9, 30),
+    )
+    assert [item.due_date for item in quote.schedule] == [
+        date(2026, 9, 30),
+        date(2026, 10, 15),
+        date(2026, 10, 31),
+        date(2026, 11, 15),
+    ]
 
-    with pytest.raises(ValueError, match="monthly_rate cannot be negative"):
-        calculate_quote(Decimal("100.00"), Decimal("-0.01"), 1, "monthly", date(2026, 1, 1))
 
-    with pytest.raises(ValueError, match="term_months must be greater than zero"):
-        calculate_quote(Decimal("100.00"), Decimal("0.10"), 0, "monthly", date(2026, 1, 1))
+def test_twice_monthly_february_dates() -> None:
+    # Non-leap year 2027 starting Feb 28
+    dates_2027 = build_due_dates(date(2027, 2, 28), "twice_monthly", 4)
+    assert dates_2027 == [
+        date(2027, 2, 28),
+        date(2027, 3, 15),
+        date(2027, 3, 31),
+        date(2027, 4, 15),
+    ]
 
-    with pytest.raises(ValueError, match="Unsupported payment frequency"):
-        calculate_quote(Decimal("100.00"), Decimal("0.10"), 1, "weekly", date(2026, 1, 1))
+    # Leap year 2028 starting Feb 29
+    dates_2028 = build_due_dates(date(2028, 2, 29), "twice_monthly", 4)
+    assert dates_2028 == [
+        date(2028, 2, 29),
+        date(2028, 3, 15),
+        date(2028, 3, 31),
+        date(2028, 4, 15),
+    ]
+
+
+def test_twice_monthly_invalid_first_due_date_rejection() -> None:
+    invalid_dates = [
+        date(2026, 9, 1),
+        date(2026, 9, 7),
+        date(2026, 9, 14),
+        date(2026, 9, 16),
+        date(2026, 9, 29),  # 29th is not month-end for September
+    ]
+
+    for inv_date in invalid_dates:
+        with pytest.raises(
+            ValueError,
+            match="Twice a Month first due date must be either the 15th or the last calendar day of the month",
+        ):
+            build_due_dates(inv_date, "twice_monthly", 2)

@@ -1,10 +1,11 @@
 """Pydantic schemas for loan quote API request and response data."""
 
+import calendar
 from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from app.features.loans.calculator import LoanQuote, ScheduleItem
@@ -26,6 +27,16 @@ class LoanQuoteRequest(LoanSchema):
         ..., description="Payment frequency"
     )
     first_due_date: date = Field(..., description="Date of first scheduled payment")
+
+    @model_validator(mode="after")
+    def validate_twice_monthly_first_due_date(self) -> "LoanQuoteRequest":
+        if self.payment_frequency == "twice_monthly":
+            last_day = calendar.monthrange(self.first_due_date.year, self.first_due_date.month)[1]
+            if self.first_due_date.day != 15 and self.first_due_date.day != last_day:
+                raise ValueError(
+                    "Twice a Month first due date must be either the 15th or the last calendar day of the month"
+                )
+        return self
 
 
 class ScheduleItemResponse(LoanSchema):

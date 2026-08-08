@@ -134,13 +134,14 @@ def build_due_dates(
     elif payment_frequency == "twice_monthly":
         year = first_due_date.year
         month = first_due_date.month
-
-        # Determine starting occurrence: 15th vs last day
         last_day = calendar.monthrange(year, month)[1]
-        if first_due_date.day <= 15:
-            current_is_fifteenth = True
-        else:
-            current_is_fifteenth = False
+
+        if first_due_date.day != 15 and first_due_date.day != last_day:
+            raise ValueError(
+                "Twice a Month first due date must be either the 15th or the last calendar day of the month"
+            )
+
+        current_is_fifteenth = first_due_date.day == 15
 
         while len(due_dates) < number_of_payments:
             last_day = calendar.monthrange(year, month)[1]

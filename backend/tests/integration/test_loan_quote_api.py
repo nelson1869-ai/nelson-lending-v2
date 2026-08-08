@@ -134,3 +134,46 @@ async def test_quote_api_invalid_frequency(
         },
     )
     assert res.status_code == 422
+
+
+async def test_quote_api_invalid_twice_monthly_first_due_date(
+    api_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    headers = await get_owner_headers(db_session)
+    res = await api_client.post(
+        QUOTE_URL,
+        headers=headers,
+        json={
+            "principal": "2000.00",
+            "monthlyRate": "0.10",
+            "termMonths": 1,
+            "paymentFrequency": "twice_monthly",
+            "firstDueDate": "2026-09-07",  # 7th is invalid for twice_monthly
+        },
+    )
+    assert res.status_code == 422
+
+
+async def test_quote_api_valid_twice_monthly_quote(
+    api_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    headers = await get_owner_headers(db_session)
+    res = await api_client.post(
+        QUOTE_URL,
+        headers=headers,
+        json={
+            "principal": "3000.00",
+            "monthlyRate": "0.06",
+            "termMonths": 1,
+            "paymentFrequency": "twice_monthly",
+            "firstDueDate": "2026-09-15",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["numberOfPayments"] == 2
+    assert data["firstDueDate"] == "2026-09-15"
+    assert data["finalDueDate"] == "2026-09-30"
+
