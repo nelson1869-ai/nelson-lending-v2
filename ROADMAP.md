@@ -322,7 +322,7 @@ never force-pushed or merged without explicit review approval.
 
 ### M15 — Reports & Dashboard
 
-- **Status:** Ready for Review
+- **Status:** Completed
 - **Branch:** `feature/m15-reports-dashboard-metrics`
 - **Goal:** Provide trustworthy portfolio, collection, and balance views for the Owner.
 - **Topics to Learn:** Reporting queries; portfolio and collection metrics; balances; dashboard APIs; query performance.
