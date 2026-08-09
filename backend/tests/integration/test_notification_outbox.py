@@ -26,12 +26,23 @@ async def test_enqueue_creates_pending_safe_intent(db_session: AsyncSession) -> 
         recipient_type="borrower",
         recipient_id=recipient_id,
         template_key="payment_received",
-        payload={"amount": "700.00", "payment_date": "2026-08-09"},
+        payload={
+            "payment_id": str(aggregate_id),
+            "loan_id": str(aggregate_id),
+            "amount": "700.00",
+            "payment_date": "2026-08-09",
+        },
     )
 
     assert outbox.status == "pending"
     assert outbox.attempt_count == 0
-    assert outbox.payload == {"amount": "700.00", "payment_date": "2026-08-09"}
+    assert outbox.payload == {
+        "schema_version": 1,
+        "amount": "700.00",
+        "payment_date": "2026-08-09",
+        "payment_id": str(aggregate_id),
+        "loan_id": str(aggregate_id),
+    }
     assert outbox.delivered_at is None
 
 
@@ -45,7 +56,7 @@ async def test_enqueue_same_business_event_is_idempotent(db_session: AsyncSessio
         "recipient_type": "borrower",
         "recipient_id": recipient_id,
         "template_key": "loan_disbursed",
-        "payload": {"original_principal": "10000.00"},
+        "payload": {"loan_id": str(aggregate_id), "original_principal": "10000.00"},
     }
 
     first = await enqueue_notification(db_session, **values)

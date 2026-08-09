@@ -44,3 +44,29 @@ ALL_TEMPLATE_KEYS = {
     TEMPLATE_LOAN_DISBURSED,
     TEMPLATE_PAYMENT_RECEIVED,
 }
+
+# Every persisted payload carries an explicit version so queued records remain
+# renderable after template payloads evolve.
+PAYLOAD_SCHEMA_VERSION = 1
+
+EVENT_TYPE_BY_TEMPLATE = {
+    TEMPLATE_BORROWER_REGISTRATION_APPROVED: "borrower_registration_approved",
+    TEMPLATE_LOAN_REQUEST_SUBMITTED: "loan_request_submitted",
+    TEMPLATE_LOAN_REQUEST_APPROVED: "loan_request_approved",
+    TEMPLATE_LOAN_REQUEST_REJECTED: "loan_request_rejected",
+    TEMPLATE_LOAN_DISBURSED: "loan_disbursed",
+    TEMPLATE_PAYMENT_RECEIVED: "payment_received",
+}
+
+REQUIRED_PAYLOAD_FIELDS = {
+    TEMPLATE_BORROWER_REGISTRATION_APPROVED: {"borrower_id", "first_name", "last_name"},
+    TEMPLATE_LOAN_REQUEST_SUBMITTED: {"loan_request_id", "requested_principal"},
+    TEMPLATE_LOAN_REQUEST_APPROVED: {"loan_request_id", "requested_principal"},
+    TEMPLATE_LOAN_REQUEST_REJECTED: {
+        "loan_request_id",
+        "requested_principal",
+        "rejection_reason",
+    },
+    TEMPLATE_LOAN_DISBURSED: {"loan_id", "original_principal"},
+    TEMPLATE_PAYMENT_RECEIVED: {"payment_id", "loan_id", "amount", "payment_date"},
+}

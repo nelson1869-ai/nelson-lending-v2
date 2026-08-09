@@ -27,15 +27,21 @@ class FailingProvider:
 
 
 async def _pending(db: AsyncSession, *, max_attempts: int = 5) -> NotificationOutbox:
+    payment_id = uuid4()
     outbox = await enqueue_notification(
         db,
         event_type="payment_received",
         aggregate_type="payment",
-        aggregate_id=uuid4(),
+        aggregate_id=payment_id,
         recipient_type="borrower",
         recipient_id=uuid4(),
         template_key="payment_received",
-        payload={"amount": "700.00", "payment_date": "2026-08-09"},
+        payload={
+            "payment_id": str(payment_id),
+            "loan_id": str(uuid4()),
+            "amount": "700.00",
+            "payment_date": "2026-08-09",
+        },
         max_attempts=max_attempts,
     )
     await db.execute(
@@ -137,7 +143,12 @@ async def test_two_workers_do_not_deliver_same_outbox_attempt(
                 recipient_type="borrower",
                 recipient_id=uuid4(),
                 template_key="payment_received",
-                payload={"amount": "100.00"},
+                payload={
+                    "payment_id": str(aggregate_id),
+                    "loan_id": str(uuid4()),
+                    "amount": "100.00",
+                    "payment_date": "2026-08-09",
+                },
             )
             row.created_at = datetime(2000, 1, 1, tzinfo=UTC)
             outbox_ids.append(row.id)

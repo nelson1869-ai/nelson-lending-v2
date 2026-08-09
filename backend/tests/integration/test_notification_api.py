@@ -46,15 +46,21 @@ async def _borrower_auth(db: AsyncSession) -> tuple[Borrower, dict[str, str]]:
 
 
 async def _deliver(db: AsyncSession, borrower: Borrower) -> str:
+    payment_id = uuid4()
     outbox = await enqueue_notification(
         db,
         event_type="payment_received",
         aggregate_type="payment",
-        aggregate_id=uuid4(),
+        aggregate_id=payment_id,
         recipient_type="borrower",
         recipient_id=borrower.id,
         template_key="payment_received",
-        payload={"amount": "700.00"},
+        payload={
+            "payment_id": str(payment_id),
+            "loan_id": str(uuid4()),
+            "amount": "700.00",
+            "payment_date": "2026-08-09",
+        },
     )
     await dispatch_pending_notifications(db)
     notification = await db.scalar(

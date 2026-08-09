@@ -13,9 +13,12 @@ from app.features.notifications.constants import (
     ALL_RECIPIENT_TYPES,
     ALL_TEMPLATE_KEYS,
     CHANNEL_IN_APP,
+    EVENT_TYPE_BY_TEMPLATE,
     OUTBOX_STATUS_DEAD_LETTER,
     OUTBOX_STATUS_PENDING,
+    PAYLOAD_SCHEMA_VERSION,
     RECIPIENT_TYPE_BORROWER,
+    REQUIRED_PAYLOAD_FIELDS,
     TEMPLATE_BORROWER_REGISTRATION_APPROVED,
     TEMPLATE_LOAN_DISBURSED,
     TEMPLATE_LOAN_REQUEST_APPROVED,
@@ -42,6 +45,14 @@ class InvalidRecipientTypeError(NotificationError):
     """Raised when an invalid recipient type is supplied."""
 
 
+class InvalidNotificationPayloadError(NotificationError):
+    """Raised when a notification payload does not match its versioned template contract."""
+
+
+class InvalidMaxAttemptsError(NotificationError):
+    """Raised when retry configuration is outside the bounded supported range."""
+
+
 class NotificationNotFoundError(NotificationError):
     """Raised when a requested notification entity is missing."""
 
@@ -50,45 +61,62 @@ class CannotRetryOutboxError(NotificationError):
     """Raised when attempting to retry an outbox record that is not dead-lettered."""
 
 
+def _validate_payload(template_key: str, payload: dict[str, Any], *, persisted: bool) -> None:
+    """Validate the stable, JSON-safe payload contract for a template."""
+    if persisted and payload.get("schema_version") != PAYLOAD_SCHEMA_VERSION:
+        raise InvalidNotificationPayloadError(
+            f"Unsupported payload schema version for template '{template_key}'."
+        )
+    required = REQUIRED_PAYLOAD_FIELDS[template_key]
+    missing = sorted(field for field in required if not isinstance(payload.get(field), str))
+    if missing:
+        raise InvalidNotificationPayloadError(
+            f"Invalid payload for template '{template_key}'; missing string fields: {missing}."
+        )
+
+
 def render_notification(template_key: str, payload: dict[str, Any]) -> tuple[str, str]:
     """Render plain-text title and body for a notification template."""
+    if template_key not in ALL_TEMPLATE_KEYS:
+        raise InvalidNotificationTemplateError(f"Unknown template key: '{template_key}'")
+    _validate_payload(template_key, payload, persisted=True)
     if template_key == TEMPLATE_BORROWER_REGISTRATION_APPROVED:
         return (
             "Registration Approved",
             "Your borrower registration was approved. Activate your account before logging in.",
         )
     if template_key == TEMPLATE_LOAN_REQUEST_SUBMITTED:
-        principal = payload.get("requested_principal", "0.00")
+        principal = payload["requested_principal"]
         return (
             "Loan Request Submitted",
             f"Your loan request for ₱{principal} has been submitted for review.",
         )
     if template_key == TEMPLATE_LOAN_REQUEST_APPROVED:
-        principal = payload.get("requested_principal", "0.00")
+        principal = payload["requested_principal"]
         return (
             "Loan Request Approved",
             f"Your loan request for ₱{principal} has been approved.",
         )
     if template_key == TEMPLATE_LOAN_REQUEST_REJECTED:
-        principal = payload.get("requested_principal", "0.00")
-        reason = payload.get("rejection_reason", "Not specified")
+        principal = payload["requested_principal"]
+        reason = payload["rejection_reason"]
         return (
             "Loan Request Rejected",
             f"Your loan request for ₱{principal} was rejected. Reason: {reason}",
         )
     if template_key == TEMPLATE_LOAN_DISBURSED:
-        principal = payload.get("original_principal", "0.00")
+        principal = payload["original_principal"]
         return (
             "Loan Disbursed",
             f"Your loan of ₱{principal} has been disbursed and is now active.",
         )
     if template_key == TEMPLATE_PAYMENT_RECEIVED:
-        amount = payload.get("amount", "0.00")
+        amount = payload["amount"]
         return (
             "Payment Received",
             f"We recorded your payment of ₱{amount}. Thank you!",
         )
-    raise InvalidNotificationTemplateError(f"Unknown template key: '{template_key}'")
+    raise AssertionError("validated notification template was not rendered")
 
 
 async def enqueue_notification(
@@ -114,6 +142,17 @@ async def enqueue_notification(
         raise InvalidNotificationChannelError(f"Invalid channel: '{channel}'")
     if recipient_type not in ALL_RECIPIENT_TYPES:
         raise InvalidRecipientTypeError(f"Invalid recipient type: '{recipient_type}'")
+    if not 1 <= max_attempts <= 20:
+        raise InvalidMaxAttemptsError("max_attempts must be between 1 and 20.")
+    if event_type != EVENT_TYPE_BY_TEMPLATE[template_key]:
+        raise InvalidNotificationPayloadError(
+            f"Event type '{event_type}' does not match template '{template_key}'."
+        )
+    if "schema_version" in payload:
+        raise InvalidNotificationPayloadError("Payload schema_version is assigned by the service.")
+    _validate_payload(template_key, payload, persisted=False)
+
+    versioned_payload = {"schema_version": PAYLOAD_SCHEMA_VERSION, **payload}
 
     identity = f"{event_type}:{aggregate_id}:{recipient_id}:{template_key}:{channel}"
     idempotency_key = f"notification:{sha256(identity.encode()).hexdigest()}"
@@ -133,7 +172,7 @@ async def enqueue_notification(
         recipient_id=recipient_id,
         channel=channel,
         template_key=template_key,
-        payload=payload,
+        payload=versioned_payload,
         status=OUTBOX_STATUS_PENDING,
         attempt_count=0,
         max_attempts=max_attempts,
@@ -157,7 +196,7 @@ async def list_borrower_notifications(
             Notification.recipient_type == RECIPIENT_TYPE_BORROWER,
             Notification.recipient_id == borrower_id,
         )
-        .order_by(Notification.created_at.desc())
+        .order_by(Notification.created_at.desc(), Notification.id.desc())
         .limit(limit)
     )
     res = await db.execute(stmt)
@@ -218,7 +257,9 @@ async def list_outbox_items(
     count_res = await db.execute(count_stmt)
     total_count = count_res.scalar_one() or 0
 
-    stmt = stmt.order_by(NotificationOutbox.created_at.desc()).limit(limit)
+    stmt = stmt.order_by(NotificationOutbox.created_at.desc(), NotificationOutbox.id.desc()).limit(
+        limit
+    )
     res = await db.execute(stmt)
     return list(res.scalars().all()), total_count
 

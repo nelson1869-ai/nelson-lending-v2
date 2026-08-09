@@ -59,7 +59,8 @@ class NotificationOutbox(Base):
             name="ck_outbox_recipient_type",
         ),
         CheckConstraint(
-            "attempt_count >= 0 AND max_attempts > 0",
+            "attempt_count >= 0 AND max_attempts BETWEEN 1 AND 20 "
+            "AND attempt_count <= max_attempts",
             name="ck_outbox_attempts",
         ),
         Index("ix_notification_outbox_status_next_attempt", "status", "next_attempt_at"),

@@ -28,6 +28,12 @@ Supported templates are centralized and render plain text from minimal event sna
 
 Payloads contain only values needed to render the historical event. ORM objects, credentials,
 activation secrets, PINs, tokens, provider credentials, and accounting internals are prohibited.
+Every persisted payload includes `schema_version: 1`. The enqueue service validates the required
+string fields for the selected template and assigns the version; callers cannot override it.
+Dispatch rejects unsupported versions or malformed payloads visibly, records a sanitized failure,
+and applies normal retry/dead-letter policy. Adding a template requires one central template
+constant, its event mapping, its required-field contract, renderer coverage, and an atomic business
+integration test.
 
 ## 3. Identity, Privacy, and Visibility
 
@@ -54,7 +60,8 @@ retrying the same outbox row cannot create a second visible in-app notification.
 Outbox status is constrained to `pending`, `failed`, `delivered`, or `dead_letter`. Each eligible
 attempt increments `attempt_count` and records `last_attempt_at`. Failure records a fixed,
 sanitized summary and schedules bounded exponential backoff starting at 60 seconds and capped at
-one hour. The default maximum is five attempts. Exhausted intents become `dead_letter`, retain
+one hour. The default maximum is five attempts, and the supported range is 1 through 20, enforced
+by both the service and database. Exhausted intents become `dead_letter`, retain
 their history, and receive no further automatic attempts.
 
 An Owner may reset a dead-letter record to pending through the manual retry endpoint. This resets
@@ -67,6 +74,13 @@ The dispatcher selects at most 50 eligible rows by default using PostgreSQL
 outbox status update remain in the same short worker transaction. Concurrent workers skip rows
 locked by another worker. A crash rolls the transaction back and releases the row lock, leaving
 the committed intent eligible for a later attempt rather than stuck in a `processing` state.
+
+The in-app path is **at-least-once attempted**. Since notification insertion and acknowledgement
+share one transaction, a crash rolls both back. If a future external provider succeeds before the
+acknowledgement is committed and the process then crashes, the provider can be invoked again and
+must use an idempotency key derived from the outbox ID. M14 exposes the async dispatcher function
+for a future scheduler or dedicated worker process; FastAPI does not start a hidden background
+thread.
 
 Future external providers must not hold database locks across slow network requests. Their claim
 and stale-claim recovery design requires a separate reviewed milestone decision.

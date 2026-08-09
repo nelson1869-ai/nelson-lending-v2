@@ -66,7 +66,8 @@ def upgrade() -> None:
             name="ck_outbox_recipient_type",
         ),
         sa.CheckConstraint(
-            "attempt_count >= 0 AND max_attempts > 0",
+            "attempt_count >= 0 AND max_attempts BETWEEN 1 AND 20 "
+            "AND attempt_count <= max_attempts",
             name="ck_outbox_attempts",
         ),
     )
