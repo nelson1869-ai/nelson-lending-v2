@@ -16,7 +16,7 @@ class OwnerAccountingApiClient {
   OwnerAccountingApiClient(this._dio);
 
   Future<List<AccountModel>> fetchAccounts() async {
-    final res = await _dio.get('/owner/accounting/accounts');
+    final res = await _dio.get('/api/v1/owner/accounting/accounts');
     final list = res.data as List<dynamic>;
     return list
         .map((e) => AccountModel.fromJson(e as Map<String, dynamic>))
@@ -24,7 +24,7 @@ class OwnerAccountingApiClient {
   }
 
   Future<List<JournalTransactionModel>> fetchJournals() async {
-    final res = await _dio.get('/owner/accounting/journals');
+    final res = await _dio.get('/api/v1/owner/accounting/journals');
     final list = res.data as List<dynamic>;
     return list
         .map((e) => JournalTransactionModel.fromJson(e as Map<String, dynamic>))
@@ -32,7 +32,7 @@ class OwnerAccountingApiClient {
   }
 
   Future<JournalTransactionModel> fetchJournalDetail(String id) async {
-    final res = await _dio.get('/owner/accounting/journals/$id');
+    final res = await _dio.get('/api/v1/owner/accounting/journals/$id');
     return JournalTransactionModel.fromJson(res.data as Map<String, dynamic>);
   }
 
@@ -44,7 +44,7 @@ class OwnerAccountingApiClient {
       if (reason != null && reason.isNotEmpty) 'reason': reason,
     };
     final res = await _dio.post(
-      '/owner/accounting/journals/$id/reverse',
+      '/api/v1/owner/accounting/journals/$id/reverse',
       data: body,
     );
     return JournalTransactionModel.fromJson(res.data as Map<String, dynamic>);

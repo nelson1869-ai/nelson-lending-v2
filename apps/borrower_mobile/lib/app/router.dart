@@ -8,6 +8,7 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/home/presentation/splash_screen.dart';
+import '../features/notifications/presentation/borrower_notifications_screen.dart';
 import '../features/registration/presentation/registration_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -61,6 +62,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const BorrowerNotificationsScreen(),
       ),
     ],
   );

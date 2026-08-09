@@ -8,6 +8,7 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/home/presentation/splash_screen.dart';
+import '../features/notifications/presentation/owner_outbox_screen.dart';
 
 /// Listenable adapter that triggers GoRouter re-evaluation when AuthState changes.
 class RouterNotifier extends ChangeNotifier {
@@ -75,6 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/accounting',
         builder: (context, state) => const OwnerAccountingScreen(),
+      ),
+      GoRoute(
+        path: '/notifications/outbox',
+        builder: (context, state) => const OwnerOutboxScreen(),
       ),
     ],
   );

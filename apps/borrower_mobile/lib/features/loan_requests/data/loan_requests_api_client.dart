@@ -21,7 +21,7 @@ class LoanRequestsApiClient {
     required String firstDueDate,
   }) async {
     final response = await _dio.post(
-      '/borrower/loan-requests/quote',
+      '/api/v1/borrower/loan-requests/quote',
       data: {
         'principal': principal.toStringAsFixed(2),
         'termMonths': termMonths,
@@ -39,7 +39,7 @@ class LoanRequestsApiClient {
     required String firstDueDate,
   }) async {
     final response = await _dio.post(
-      '/borrower/loan-requests',
+      '/api/v1/borrower/loan-requests',
       data: {
         'principal': principal.toStringAsFixed(2),
         'termMonths': termMonths,
@@ -51,7 +51,7 @@ class LoanRequestsApiClient {
   }
 
   Future<List<LoanRequestModel>> listRequests() async {
-    final response = await _dio.get('/borrower/loan-requests');
+    final response = await _dio.get('/api/v1/borrower/loan-requests');
     final list = response.data as List<dynamic>;
     return list
         .map((e) => LoanRequestModel.fromJson(e as Map<String, dynamic>))
@@ -59,13 +59,14 @@ class LoanRequestsApiClient {
   }
 
   Future<LoanRequestModel> getRequestDetail(String requestId) async {
-    final response = await _dio.get('/borrower/loan-requests/$requestId');
+    final response =
+        await _dio.get('/api/v1/borrower/loan-requests/$requestId');
     return LoanRequestModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<LoanRequestModel> cancelRequest(String requestId) async {
     final response =
-        await _dio.post('/borrower/loan-requests/$requestId/cancel');
+        await _dio.post('/api/v1/borrower/loan-requests/$requestId/cancel');
     return LoanRequestModel.fromJson(response.data as Map<String, dynamic>);
   }
 }

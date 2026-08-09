@@ -16,7 +16,7 @@ class BorrowerLoansApiClient {
   BorrowerLoansApiClient(this._dio);
 
   Future<List<BorrowerLoanModel>> fetchLoans() async {
-    final res = await _dio.get('/borrower/loans');
+    final res = await _dio.get('/api/v1/borrower/loans');
     final list = res.data as List<dynamic>;
     return list
         .map((e) => BorrowerLoanModel.fromJson(e as Map<String, dynamic>))
@@ -24,12 +24,12 @@ class BorrowerLoansApiClient {
   }
 
   Future<BorrowerLoanDetailModel> fetchLoanDetail(String id) async {
-    final res = await _dio.get('/borrower/loans/$id');
+    final res = await _dio.get('/api/v1/borrower/loans/$id');
     return BorrowerLoanDetailModel.fromJson(res.data as Map<String, dynamic>);
   }
 
   Future<List<BorrowerPaymentModel>> fetchLoanPayments(String loanId) async {
-    final res = await _dio.get('/borrower/loans/$loanId/payments');
+    final res = await _dio.get('/api/v1/borrower/loans/$loanId/payments');
     final list = res.data as List<dynamic>;
     return list
         .map((e) => BorrowerPaymentModel.fromJson(e as Map<String, dynamic>))

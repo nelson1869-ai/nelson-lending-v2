@@ -12,6 +12,12 @@ from app.features.borrowers.models import Borrower
 from app.features.business_settings.models import BusinessSetting
 from app.features.loan_requests.models import LoanRequest
 from app.features.loans.calculator import calculate_quote, quantize_money, quantize_rate
+from app.features.notifications.constants import (
+    TEMPLATE_LOAN_REQUEST_APPROVED,
+    TEMPLATE_LOAN_REQUEST_REJECTED,
+    TEMPLATE_LOAN_REQUEST_SUBMITTED,
+)
+from app.features.notifications.service import enqueue_notification
 
 
 class LoanRequestNotFoundError(Exception):
@@ -88,6 +94,19 @@ async def submit_loan_request(
     db_session.add(request)
     try:
         await db_session.flush()
+        await enqueue_notification(
+            db_session,
+            event_type="loan_request_submitted",
+            aggregate_type="loan_request",
+            aggregate_id=request.id,
+            recipient_type="borrower",
+            recipient_id=borrower_id,
+            template_key=TEMPLATE_LOAN_REQUEST_SUBMITTED,
+            payload={
+                "loan_request_id": str(request.id),
+                "requested_principal": str(request.requested_principal),
+            },
+        )
     except IntegrityError as exc:
         await db_session.rollback()
         raise LoanRequestConflictError("Borrower already has a pending loan request") from exc
@@ -208,6 +227,19 @@ async def approve_loan_request(
     req.reviewed_at = datetime.now(UTC)
     req.reviewed_by_owner_id = owner_id
     req.owner_note = owner_note
+    await enqueue_notification(
+        db_session,
+        event_type="loan_request_approved",
+        aggregate_type="loan_request",
+        aggregate_id=req.id,
+        recipient_type="borrower",
+        recipient_id=req.borrower_id,
+        template_key=TEMPLATE_LOAN_REQUEST_APPROVED,
+        payload={
+            "loan_request_id": str(req.id),
+            "requested_principal": str(req.requested_principal),
+        },
+    )
     await db_session.flush()
     return req
 
@@ -233,5 +265,19 @@ async def reject_loan_request(
     req.reviewed_at = datetime.now(UTC)
     req.reviewed_by_owner_id = owner_id
     req.owner_note = owner_note
+    await enqueue_notification(
+        db_session,
+        event_type="loan_request_rejected",
+        aggregate_type="loan_request",
+        aggregate_id=req.id,
+        recipient_type="borrower",
+        recipient_id=req.borrower_id,
+        template_key=TEMPLATE_LOAN_REQUEST_REJECTED,
+        payload={
+            "loan_request_id": str(req.id),
+            "requested_principal": str(req.requested_principal),
+            "rejection_reason": req.owner_note or "Not specified",
+        },
+    )
     await db_session.flush()
     return req
