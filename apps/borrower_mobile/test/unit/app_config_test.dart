@@ -5,6 +5,6 @@ void main() {
   test('AppConfig.fromEnvironment returns default base URL when unspecified',
       () {
     final config = AppConfig.fromEnvironment();
-    expect(config.apiBaseUrl, equals('http://10.0.2.2:8000'));
+    expect(config.apiBaseUrl, equals('https://lending-nelson-v2-api.onrender.com'));
   });
 }

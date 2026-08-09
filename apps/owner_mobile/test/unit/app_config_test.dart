@@ -6,8 +6,8 @@ void main() {
     test('default configuration provides valid values', () {
       final config = AppConfig.fromEnvironment();
 
-      expect(config.apiBaseUrl, equals('http://10.0.2.2:8000'));
-      expect(config.environment, equals('development'));
+      expect(config.apiBaseUrl, equals('https://lending-nelson-v2-api.onrender.com'));
+      expect(config.environment, equals('production'));
     });
   });
 }
