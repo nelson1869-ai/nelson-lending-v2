@@ -36,6 +36,7 @@ from app.features.payments.router import (
 from app.features.payments.router import (
     owner_router as owner_payments_router,
 )
+from app.features.reports.router import owner_router as owner_reports_router
 
 api_router = APIRouter()
 versioned_router = APIRouter()
@@ -53,6 +54,7 @@ versioned_router.include_router(borrower_payments_router)
 versioned_router.include_router(owner_accounting_router)
 versioned_router.include_router(borrower_notifications_router)
 versioned_router.include_router(owner_notifications_router)
+versioned_router.include_router(owner_reports_router)
 
 api_router.include_router(health_router)
 api_router.include_router(versioned_router, prefix=get_settings().api_v1_prefix)

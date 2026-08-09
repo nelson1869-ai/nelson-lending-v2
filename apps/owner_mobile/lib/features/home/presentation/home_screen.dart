@@ -8,6 +8,7 @@ import '../../auth/presentation/auth_controller.dart';
 import '../../loan_requests/presentation/owner_loan_requests_list_screen.dart';
 import '../../loans/presentation/owner_loans_list_screen.dart';
 import '../../notifications/presentation/owner_outbox_screen.dart';
+import '../../reports/presentation/owner_dashboard_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -144,6 +145,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const OwnerDashboardScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      icon: const Icon(Icons.dashboard),
+                      label: const Text('Reports & Dashboard'),
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
