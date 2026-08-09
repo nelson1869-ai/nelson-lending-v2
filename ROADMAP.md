@@ -288,15 +288,24 @@ never force-pushed or merged without explicit review approval.
 
 ### M14 — Notifications & Outbox
 
-- **Status:** Not Started
+- **Status:** Ready for Review
 - **Branch:** `feature/m14-notifications-outbox`
 - **Goal:** Reliably capture notification intent inside business transactions and deliver asynchronously.
 - **Topics to Learn:** Transactional outbox; notification records; asynchronous boundaries; retries; deduplication; future push notifications.
 - **Deliverables:** Outbox schema/service; delivery worker boundary; retry and deduplication policy; notification status APIs where appropriate.
 - **Tests / Quality Gates:** Atomic domain/outbox writes; retry behavior; duplicate suppression; failure recovery; no external call inside financial transactions.
-- **Completion Commit:** Pending
+- **Completion Commits:**
+  - `2f477fa`: feat(notifications): add transactional outbox and notification models and schema migration
+  - `1adae52`: feat(notifications): implement canonical enqueue service, renderer, and in-app provider
+  - `c0274e5`: feat(notifications): integrate transactional outbox into business workflows
+  - `0a67337`: feat(notifications): add outbox dispatcher with locking, backoff, and dead-letter handling
+  - `258e898`: feat(notifications): add borrower notification and owner outbox operational APIs
+  - `c3f0594`: feat(borrower_mobile): add notification inbox experience
+  - `bd4c2bc`: test(notifications): harden outbox reliability and privacy
+  - `bc2951a`: feat(mobile): wire notification views and versioned feature APIs
+  - `3a4561f`: docs(notifications): define outbox delivery rules
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Notes / Lessons Learned:** Business mutations and notification intents now share one PostgreSQL transaction while delivery remains outside FastAPI business requests. The in-app provider writes immutable user-visible notifications, and deterministic SHA-256 intent keys plus a unique outbox source prevent duplicate intents and visible deliveries. Bounded exponential retry terminates in durable dead-letter state; Owner operations can inspect and safely reset dead letters. PostgreSQL `FOR UPDATE SKIP LOCKED` allows concurrent short-lived in-app dispatcher transactions, while rollback releases claims after worker crashes. Borrower inbox access is derived exclusively from the authenticated Borrower identity. M14 also corrected versioned mobile feature API paths after device screenshots exposed shared HTTP 404 responses.
 
 ### M15 — Reports & Dashboard
 
