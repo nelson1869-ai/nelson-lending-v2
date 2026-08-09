@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.features.owner_identity.dependencies import get_current_owner
 from app.features.owner_identity.models import OwnerUser
 from app.features.reports.schemas import OwnerDashboardResponse
-from app.features.reports.service import get_owner_dashboard
+from app.features.reports.service import InvalidCollectionDateRangeError, get_owner_dashboard
 
 CurrentOwner = Annotated[OwnerUser, Depends(get_current_owner)]
 DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
@@ -30,9 +30,10 @@ async def owner_dashboard(
     to_date: Annotated[date, Query(description="Inclusive Philippine collection date")],
 ) -> OwnerDashboardResponse:
     """Return portfolio, collections, accounting, and request summaries."""
-    if from_date > to_date:
+    try:
+        return await get_owner_dashboard(session, from_date=from_date, to_date=to_date)
+    except InvalidCollectionDateRangeError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="from_date must be on or before to_date.",
-        )
-    return await get_owner_dashboard(session, from_date=from_date, to_date=to_date)
+            detail=str(exc),
+        ) from exc

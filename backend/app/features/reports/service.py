@@ -24,6 +24,21 @@ from app.features.reports.schemas import (
 ZERO = Decimal("0.00")
 
 
+class InvalidCollectionDateRangeError(ValueError):
+    """Raised when an inclusive range cannot form a valid half-open interval."""
+
+
+def collection_exclusive_end(*, from_date: date, to_date: date) -> date:
+    """Validate inclusive dates and return the representable exclusive end."""
+    if from_date > to_date:
+        raise InvalidCollectionDateRangeError("from_date must be on or before to_date.")
+    if to_date == date.max:
+        raise InvalidCollectionDateRangeError(
+            "to_date must be before 9999-12-31 to form an exclusive end."
+        )
+    return to_date + timedelta(days=1)
+
+
 async def get_owner_dashboard(
     db: AsyncSession,
     *,
@@ -31,6 +46,7 @@ async def get_owner_dashboard(
     to_date: date,
 ) -> OwnerDashboardResponse:
     """Return all current dashboard summaries without mutating financial records."""
+    collection_exclusive_end(from_date=from_date, to_date=to_date)
     return OwnerDashboardResponse(
         portfolio=await get_portfolio_snapshot(db),
         collections=await get_collections_summary(db, from_date=from_date, to_date=to_date),
@@ -82,7 +98,7 @@ async def get_collections_summary(
     to_date: date,
 ) -> CollectionsSummary:
     """Aggregate posted Payments using the effective payment_date half-open interval."""
-    exclusive_end = to_date + timedelta(days=1)
+    exclusive_end = collection_exclusive_end(from_date=from_date, to_date=to_date)
     totals = (
         await db.execute(
             select(

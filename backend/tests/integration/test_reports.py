@@ -246,6 +246,10 @@ async def test_dashboard_api_is_owner_only_and_validates_date_range(
         "/api/v1/owner/reports/dashboard?from_date=2026-09-01&to_date=2026-08-31",
         headers=owner_headers,
     )
+    unrepresentable_exclusive_end = await api_client.get(
+        "/api/v1/owner/reports/dashboard?from_date=9999-12-31&to_date=9999-12-31",
+        headers=owner_headers,
+    )
     borrower_denied = await api_client.get(
         "/api/v1/owner/reports/dashboard?from_date=2026-08-01&to_date=2026-08-31",
         headers=borrower_headers,
@@ -256,6 +260,7 @@ async def test_dashboard_api_is_owner_only_and_validates_date_range(
 
     assert ok.status_code == 200
     assert invalid.status_code == 422
+    assert unrepresentable_exclusive_end.status_code == 422
     assert borrower_denied.status_code == 401
     assert anonymous_denied.status_code == 401
 
