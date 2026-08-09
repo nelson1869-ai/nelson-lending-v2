@@ -27,6 +27,11 @@ class OwnerReportsApiClient {
     return OwnerDashboardModel.fromJson(response.data as Map<String, dynamic>);
   }
 
+  Future<int> accrueDueInterest() async {
+    final response = await _dio.post('/api/v1/owner/loans/accrue-interest');
+    return (response.data['loans_updated'] as num).toInt();
+  }
+
   static String _dateOnly(DateTime value) {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');

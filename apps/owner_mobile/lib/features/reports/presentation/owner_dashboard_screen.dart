@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/owner_reports_api_client.dart';
 import '../domain/dashboard_models.dart';
+import '../../borrowers/presentation/owner_borrowers_screen.dart';
+import '../../accounting/presentation/owner_accounting_screen.dart';
+import '../../loans/presentation/owner_loans_list_screen.dart';
+import '../../loans/presentation/owner_loans_controller.dart';
+import '../../loan_requests/presentation/owner_loan_requests_controller.dart';
+import '../../loan_requests/presentation/owner_loan_requests_list_screen.dart';
 
 class OwnerDashboardScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -18,6 +24,7 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
   late DateTime _fromDate;
   late DateTime _toDate;
   late Future<OwnerDashboardModel> _dashboard;
+  bool _isAccruingInterest = false;
 
   @override
   void initState() {
@@ -41,6 +48,27 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
     setState(() {
       _dashboard = nextDashboard;
     });
+  }
+
+  Future<void> _accrueInterest() async {
+    setState(() => _isAccruingInterest = true);
+    try {
+      final updated = await ref
+          .read(ownerReportsApiClientProvider)
+          .accrueDueInterest();
+      if (!mounted) return;
+      _refresh();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$updated loan(s) updated with due interest.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to accrue due interest.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isAccruingInterest = false);
+    }
   }
 
   Future<void> _selectDate({required bool from}) async {
@@ -75,6 +103,17 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
             tooltip: 'Refresh dashboard',
             onPressed: _fromDate.isAfter(_toDate) ? null : _refresh,
             icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip: 'Accrue due interest',
+            onPressed: _isAccruingInterest ? null : _accrueInterest,
+            icon: _isAccruingInterest
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.percent),
           ),
         ],
       ),
@@ -155,14 +194,46 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
             _section(
               'Portfolio',
               [
-                _money('Original principal (active + paid)',
-                    dashboard.portfolio.totalOriginalPrincipal),
+                _money('Total money borrowed',
+                    dashboard.portfolio.totalOriginalPrincipal,
+                    onTap: _openLoans),
+                _money('Total scheduled interest',
+                    dashboard.portfolio.totalScheduledInterest),
+                _money('Total scheduled repayment',
+                    dashboard.portfolio.totalScheduledRepayment),
+                _money('Next scheduled interest due',
+                    dashboard.portfolio.nextInterestDue),
                 _money('Active outstanding principal',
-                    dashboard.portfolio.outstandingPrincipal),
+                    dashboard.portfolio.outstandingPrincipal,
+                    onTap: _openLoans),
                 _money('Active accrued interest',
                     dashboard.portfolio.accruedInterest),
+                _borrowerCountButton(dashboard.portfolio.borrowerCount),
+                _count('Due today', dashboard.portfolio.dueTodayCount,
+                    onTap: _openLoans),
+                _count('Overdue loans', dashboard.portfolio.overdueLoanCount,
+                    onTap: _openLoans),
+                _money('Overdue outstanding principal',
+                    dashboard.portfolio.overdueOutstandingPrincipal,
+                    onTap: _openLoans),
+                _count('Due in next 7 days',
+                    dashboard.portfolio.dueNext7DaysCount,
+                    onTap: _openLoans),
+                _money('Due next 7 days outstanding principal',
+                    dashboard.portfolio.dueNext7DaysOutstandingPrincipal,
+                    onTap: _openLoans),
+                _count('Overdue 1–7 days',
+                    dashboard.portfolio.overdue1To7DaysCount,
+                    onTap: _openLoans),
+                _count('Overdue 8–30 days',
+                    dashboard.portfolio.overdue8To30DaysCount,
+                    onTap: _openLoans),
+                _count('Overdue 30+ days',
+                    dashboard.portfolio.overdue30PlusDaysCount,
+                    onTap: _openLoans),
                 ...dashboard.portfolio.statusCounts
-                    .map((item) => _count(item.status, item.count)),
+                    .map((item) => _count(item.status, item.count,
+                        onTap: () => _openLoans(status: item.status))),
               ],
             ),
           if (!invalidRange)
@@ -170,11 +241,15 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
               'Collections (${dashboard.collections.fromDate} to ${dashboard.collections.toDate})',
               [
                 _money(
-                    'Total payments', dashboard.collections.totalPaymentAmount),
-                _money('Principal', dashboard.collections.principalAllocation),
-                _money('Interest', dashboard.collections.interestAllocation),
+                    'Total payments', dashboard.collections.totalPaymentAmount,
+                    onTap: _openAccounting),
+                _money('Principal', dashboard.collections.principalAllocation,
+                    onTap: _openAccounting),
+                _money('Interest collected', dashboard.collections.interestAllocation,
+                    onTap: _openAccounting),
                 _money('Unapplied credit',
-                    dashboard.collections.unappliedCreditAllocation),
+                    dashboard.collections.unappliedCreditAllocation,
+                    onTap: _openAccounting),
               ],
             ),
           if (!invalidRange)
@@ -182,14 +257,16 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
               'Accounting balances',
               dashboard.accountingBalances
                   .map((item) =>
-                      _money('${item.code} ${item.name}', item.balance))
+                      _money('${item.code} ${item.name}', item.balance,
+                          onTap: _openAccounting))
                   .toList(),
             ),
           if (!invalidRange)
             _section(
               'Loan requests',
               dashboard.loanRequestStatusCounts
-                  .map((item) => _count(item.status, item.count))
+                  .map((item) => _count(item.status, item.count,
+                      onTap: () => _openRequests(item.status)))
                   .toList(),
             ),
         ],
@@ -199,6 +276,7 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
 
   Widget _section(String title, List<Widget> rows) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -213,15 +291,91 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
     );
   }
 
-  Widget _money(String label, String value) => ListTile(
+  void _openLoans({String? status}) {
+    ref.read(ownerLoansFilterProvider.notifier).state = status;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OwnerLoansListScreen()),
+    );
+  }
+
+  void _openAccounting() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OwnerAccountingScreen()),
+    );
+  }
+
+  void _openRequests(String status) {
+    ref.read(ownerLoanRequestsControllerProvider.notifier).fetchRequests(status);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OwnerLoanRequestsListScreen()),
+    );
+  }
+
+  Widget _money(String label, String value, {VoidCallback? onTap}) => ListTile(
         dense: true,
         title: Text(label),
-        trailing: Text('₱$value'),
+        trailing: _valueWithChevron('₱$value', onTap, _metricColor(label)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: onTap,
       );
 
-  Widget _count(String label, int value) => ListTile(
+  Widget _count(String label, int value, {VoidCallback? onTap}) => ListTile(
         dense: true,
         title: Text(label.replaceAll('_', ' ')),
-        trailing: Text('$value'),
+        trailing: _valueWithChevron('$value', onTap, _metricColor(label)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: onTap,
+      );
+
+  Widget _valueWithChevron(String value, VoidCallback? onTap, [Color? color]) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(value,
+              style: TextStyle(
+                  fontWeight: FontWeight.w600, color: color)),
+          if (onTap != null) ...[
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, size: 20),
+          ],
+        ],
+      );
+
+  Color? _metricColor(String label) {
+    final normalized = label.toLowerCase();
+    if (normalized.contains('overdue') ||
+        normalized.contains('rejected') ||
+        normalized.contains('defaulted')) {
+      return Colors.red.shade700;
+    }
+    if (normalized.contains('interest') || normalized.contains('due')) {
+      return Colors.orange.shade800;
+    }
+    if (normalized.contains('payment') ||
+        normalized.contains('collected') ||
+        normalized.contains('paid') ||
+        normalized.contains('approved') ||
+        normalized.contains('active')) {
+      return Colors.green.shade700;
+    }
+    if (normalized.contains('principal') ||
+        normalized.contains('borrowed') ||
+        normalized.contains('balance')) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    if (normalized.contains('unapplied')) {
+      return Colors.deepPurple.shade700;
+    }
+    return null;
+  }
+
+  Widget _borrowerCountButton(int value) => ListTile(
+        dense: true,
+        title: const Text('Total borrowers'),
+        trailing: _valueWithChevron('$value', () {}),
+        leading: const Icon(Icons.people),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const OwnerBorrowersScreen()),
+        ),
       );
 }

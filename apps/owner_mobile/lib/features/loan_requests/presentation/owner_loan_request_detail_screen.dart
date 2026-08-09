@@ -45,15 +45,15 @@ class _OwnerLoanRequestDetailScreenState
       builder: (ctx) {
         _noteController.clear();
         return AlertDialog(
-          title:
-              Text(isApprove ? 'Approve Loan Request' : 'Reject Loan Request'),
+          title: Text(
+              isApprove ? 'Accept Loan Request' : 'Reject Loan Request'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 isApprove
-                    ? 'Approve loan request for ${widget.request.borrowerFullName}? (Note: Loan activation is deferred to M11)'
+                    ? 'Accept loan request for ${widget.request.borrowerFullName}? (Note: Loan activation is deferred to M11)'
                     : 'Reject loan request for ${widget.request.borrowerFullName}?',
               ),
               const SizedBox(height: 16),
@@ -78,7 +78,7 @@ class _OwnerLoanRequestDetailScreenState
                 backgroundColor: isApprove ? Colors.green : Colors.red,
                 foregroundColor: Colors.white,
               ),
-              child: Text(isApprove ? 'Approve' : 'Reject'),
+              child: Text(isApprove ? 'Accept' : 'Reject'),
             ),
           ],
         );
@@ -95,7 +95,7 @@ class _OwnerLoanRequestDetailScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(isApprove
-                ? 'Loan request approved successfully'
+                ? 'Loan request accepted successfully'
                 : 'Loan request rejected'),
           ),
         );
@@ -170,7 +170,6 @@ class _OwnerLoanRequestDetailScreenState
                     _buildRow('Full Name', req.borrowerFullName),
                     _buildRow('National ID', req.borrowerNationalId),
                     _buildRow('Phone Number', req.borrowerPhoneNumber),
-                    _buildRow('Borrower ID', req.borrowerId),
                   ],
                 ),
               ),
@@ -194,7 +193,7 @@ class _OwnerLoanRequestDetailScreenState
                         'Term Months', '${req.requestedTermMonths} months'),
                     _buildRow('Frequency', req.requestedPaymentFrequency),
                     _buildRow('First Due Date', req.requestedFirstDueDate),
-                    _buildRow('Submitted At', req.submittedAt),
+                    _buildRow('Submitted At', _formatDateTime(req.submittedAt)),
                   ],
                 ),
               ),
@@ -227,20 +226,31 @@ class _OwnerLoanRequestDetailScreenState
                     const Text('Schedule Projection',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    ...quote.schedule.map((item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('#${item.paymentNumber} (${item.dueDate})'),
-                              Text(
-                                '₱${item.paymentAmount.toStringAsFixed(2)} (Int: ₱${item.interestPaid.toStringAsFixed(2)})',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w500),
+                    ...quote.schedule.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '#${item.paymentNumber}\n${item.dueDate}',
                               ),
-                            ],
-                          ),
-                        )),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                '₱${item.paymentAmount.toStringAsFixed(2)}\nInterest: ₱${item.interestPaid.toStringAsFixed(2)}',
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -272,7 +282,7 @@ class _OwnerLoanRequestDetailScreenState
                 ),
               ),
             ],
-            if (req.status == 'approved') ...[
+            if (req.status == 'approved' && req.loanId == null) ...[
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -283,7 +293,8 @@ class _OwnerLoanRequestDetailScreenState
                           final loan = await ref
                               .read(ownerLoansControllerProvider.notifier)
                               .createLoanFromRequest(req.id);
-                          if (context.mounted && loan != null) {
+                          if (!context.mounted) return;
+                          if (loan != null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content:
@@ -291,6 +302,18 @@ class _OwnerLoanRequestDetailScreenState
                               ),
                             );
                             Navigator.pop(context);
+                          } else {
+                            final error = ref
+                                .read(ownerLoansControllerProvider)
+                                .error;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Unable to create loan${error == null ? '' : ': $error'}',
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
                           }
                         },
                   style: ElevatedButton.styleFrom(
@@ -302,6 +325,21 @@ class _OwnerLoanRequestDetailScreenState
                   label: const Text(
                     'Create Loan',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ),
+            ],
+            if (req.status == 'approved' && req.loanId != null) ...[
+              const SizedBox(height: 24),
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green),
+                      SizedBox(width: 12),
+                      Expanded(child: Text('Loan contract already created.')),
+                    ],
                   ),
                 ),
               ),
@@ -320,7 +358,7 @@ class _OwnerLoanRequestDetailScreenState
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       icon: const Icon(Icons.check),
-                      label: const Text('Approve',
+                      label: const Text('Accept Loan Request',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
@@ -352,12 +390,34 @@ class _OwnerLoanRequestDetailScreenState
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(
+            flex: 2,
+            child: Text(label, style: const TextStyle(color: Colors.grey)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  String _formatDateTime(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    final local = parsed.toLocal();
+    final date =
+        '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+    final time =
+        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    return '$date $time';
   }
 }

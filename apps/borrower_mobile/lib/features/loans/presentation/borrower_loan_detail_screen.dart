@@ -115,6 +115,33 @@ class BorrowerLoanDetailScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          const Text('Total Scheduled Interest:'),
+                          Text(
+                            '₱${loan.quotePreview.totalScheduledInterest}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Total Repayment:'),
+                          Text(
+                            '₱${loan.quotePreview.totalScheduledRepayment}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Number of Payments:'),
+                          Text('${loan.quotePreview.numberOfPayments}'),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           const Text('Term & Frequency:'),
                           Text(
                               '${loan.termMonths} mos (${loan.paymentFrequency})'),
@@ -210,18 +237,18 @@ class BorrowerLoanDetailScreen extends ConsumerWidget {
                   columns: const [
                     DataColumn(label: Text('#')),
                     DataColumn(label: Text('Due Date')),
+                    DataColumn(label: Text('Total Payment')),
                     DataColumn(label: Text('Principal')),
                     DataColumn(label: Text('Interest')),
-                    DataColumn(label: Text('Total Payment')),
                     DataColumn(label: Text('Ending Balance')),
                   ],
                   rows: loan.quotePreview.schedule.map((item) {
                     return DataRow(cells: [
                       DataCell(Text(item.installmentNumber.toString())),
                       DataCell(Text(item.dueDate)),
+                      DataCell(Text('₱${item.scheduledPayment}')),
                       DataCell(Text('₱${item.scheduledPrincipal}')),
                       DataCell(Text('₱${item.interestDue}')),
-                      DataCell(Text('₱${item.scheduledPayment}')),
                       DataCell(Text('₱${item.closingPrincipal}')),
                     ]);
                   }).toList(),

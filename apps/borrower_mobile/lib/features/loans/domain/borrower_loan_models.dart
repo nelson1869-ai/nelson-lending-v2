@@ -96,6 +96,10 @@ class BorrowerLoanModel {
   final int numberOfPayments;
   final String firstDueDate;
   final String finalDueDate;
+  final String? nextInterestDueDate;
+  final String? nextPaymentAmount;
+  final String? nextInterestAmount;
+  final String? nextPrincipalAmount;
   final String status;
   final String? disbursedAt;
   final String? cancelledAt;
@@ -113,6 +117,10 @@ class BorrowerLoanModel {
     required this.numberOfPayments,
     required this.firstDueDate,
     required this.finalDueDate,
+    this.nextInterestDueDate,
+    this.nextPaymentAmount,
+    this.nextInterestAmount,
+    this.nextPrincipalAmount,
     required this.status,
     this.disbursedAt,
     this.cancelledAt,
@@ -132,6 +140,10 @@ class BorrowerLoanModel {
       numberOfPayments: json['numberOfPayments'] as int,
       firstDueDate: json['firstDueDate'] as String,
       finalDueDate: json['finalDueDate'] as String,
+      nextInterestDueDate: json['nextInterestDueDate'] as String?,
+      nextPaymentAmount: json['nextPaymentAmount'] as String?,
+      nextInterestAmount: json['nextInterestAmount'] as String?,
+      nextPrincipalAmount: json['nextPrincipalAmount'] as String?,
       status: json['status'] as String,
       disbursedAt: json['disbursedAt'] as String?,
       cancelledAt: json['cancelledAt'] as String?,
@@ -156,6 +168,10 @@ class BorrowerLoanDetailModel extends BorrowerLoanModel {
     required super.numberOfPayments,
     required super.firstDueDate,
     required super.finalDueDate,
+    super.nextInterestDueDate,
+    super.nextPaymentAmount,
+    super.nextInterestAmount,
+    super.nextPrincipalAmount,
     required super.status,
     super.disbursedAt,
     super.cancelledAt,
@@ -177,6 +193,10 @@ class BorrowerLoanDetailModel extends BorrowerLoanModel {
       numberOfPayments: parent.numberOfPayments,
       firstDueDate: parent.firstDueDate,
       finalDueDate: parent.finalDueDate,
+      nextInterestDueDate: parent.nextInterestDueDate,
+      nextPaymentAmount: parent.nextPaymentAmount,
+      nextInterestAmount: parent.nextInterestAmount,
+      nextPrincipalAmount: parent.nextPrincipalAmount,
       status: parent.status,
       disbursedAt: parent.disbursedAt,
       cancelledAt: parent.cancelledAt,

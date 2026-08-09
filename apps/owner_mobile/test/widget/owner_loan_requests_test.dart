@@ -9,6 +9,10 @@ void main() {
     testWidgets(
         'OwnerLoanRequestDetailScreen displays borrower details and actions for pending request',
         (tester) async {
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       const quote = OwnerLoanQuotePreviewModel(
         principal: 5000.0,
         monthlyRate: 0.05,
@@ -63,6 +67,7 @@ void main() {
       expect(find.text('PH-ID-12345'), findsOneWidget);
       expect(find.text('Approve'), findsOneWidget);
       expect(find.text('Reject'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 }

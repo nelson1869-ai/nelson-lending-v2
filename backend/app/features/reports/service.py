@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.accounting.constants import SYSTEM_ACCOUNTS
 from app.features.accounting.models import Account, JournalEntry
+from app.features.borrowers.models import Borrower
 from app.features.loan_requests.models import LOAN_REQUEST_STATUSES, LoanRequest
-from app.features.loans.calculator import quantize_money
+from app.features.loans.calculator import calculate_quote, quantize_money
 from app.features.loans.models import LOAN_STATUSES, Loan
 from app.features.payments.models import Payment
 from app.features.reports.schemas import (
@@ -78,16 +79,89 @@ async def get_portfolio_snapshot(db: AsyncSession) -> PortfolioSnapshot:
             )
         )
     ).one()
+    loans_for_projection = (
+        await db.scalars(select(Loan).where(Loan.status.in_(("active", "paid"))))
+    ).all()
+    total_scheduled_interest = ZERO
+    total_scheduled_repayment = ZERO
+    next_interest_due = ZERO
+    calculated_accrued_interest = monetary[2]
+    today = date.today()
+    for loan in loans_for_projection:
+        quote = calculate_quote(
+            principal=loan.original_principal,
+            monthly_rate=loan.monthly_rate,
+            term_months=loan.term_months,
+            payment_frequency=loan.payment_frequency,
+            first_due_date=loan.first_due_date,
+        )
+        total_scheduled_interest += quote.total_scheduled_interest
+        total_scheduled_repayment += quote.total_scheduled_repayment
+        if loan.status == "active":
+            next_installment = next(
+                (item for item in quote.schedule
+                 if item.due_date == loan.next_interest_due_date),
+                None,
+            )
+            if next_installment is not None:
+                next_interest_due += next_installment.interest_due
+                if (
+                    loan.next_interest_due_date is not None
+                    and loan.next_interest_due_date <= today
+                ):
+                    calculated_accrued_interest += next_installment.interest_due
+    borrower_count = await db.scalar(select(func.count(Borrower.id)))
+    due_today_count = await db.scalar(select(func.count(Loan.id)).where(
+        Loan.status == "active", Loan.next_interest_due_date == today
+    ))
+    overdue_loan_count = await db.scalar(select(func.count(Loan.id)).where(
+        Loan.status == "active", Loan.next_interest_due_date < today
+    ))
+    overdue_principal = await db.scalar(select(
+        func.coalesce(func.sum(Loan.outstanding_principal), ZERO)
+    ).where(Loan.status == "active", Loan.next_interest_due_date < today))
+    due_7_end = today + timedelta(days=7)
+    due_next_7_count = await db.scalar(select(func.count(Loan.id)).where(
+        Loan.status == "active", Loan.next_interest_due_date > today,
+        Loan.next_interest_due_date <= due_7_end
+    ))
+    due_next_7_principal = await db.scalar(select(
+        func.coalesce(func.sum(Loan.outstanding_principal), ZERO)
+    ).where(Loan.status == "active", Loan.next_interest_due_date > today,
+            Loan.next_interest_due_date <= due_7_end))
+    overdue_1_7 = await db.scalar(select(func.count(Loan.id)).where(
+        Loan.status == "active", Loan.next_interest_due_date >= today - timedelta(days=7),
+        Loan.next_interest_due_date < today
+    ))
+    overdue_8_30 = await db.scalar(select(func.count(Loan.id)).where(
+        Loan.status == "active", Loan.next_interest_due_date >= today - timedelta(days=30),
+        Loan.next_interest_due_date < today - timedelta(days=7)
+    ))
+    overdue_30_plus = await db.scalar(select(func.count(Loan.id)).where(
+        Loan.status == "active", Loan.next_interest_due_date < today - timedelta(days=30)
+    ))
 
     return PortfolioSnapshot(
         status_counts=[
             StatusCount(status=status, count=counts.get(status, 0)) for status in LOAN_STATUSES
         ],
         total_original_principal=quantize_money(monetary[0]),
+        total_scheduled_interest=quantize_money(total_scheduled_interest),
+        total_scheduled_repayment=quantize_money(total_scheduled_repayment),
+        next_interest_due=quantize_money(next_interest_due),
         outstanding_principal=quantize_money(monetary[1]),
-        accrued_interest=quantize_money(monetary[2]),
+        accrued_interest=quantize_money(calculated_accrued_interest),
         active_loan_count=counts.get("active", 0),
         paid_loan_count=counts.get("paid", 0),
+        borrower_count=int(borrower_count or 0),
+        due_today_count=int(due_today_count or 0),
+        overdue_loan_count=int(overdue_loan_count or 0),
+        overdue_outstanding_principal=quantize_money(overdue_principal),
+        due_next_7_days_count=int(due_next_7_count or 0),
+        due_next_7_days_outstanding_principal=quantize_money(due_next_7_principal),
+        overdue_1_7_days_count=int(overdue_1_7 or 0),
+        overdue_8_30_days_count=int(overdue_8_30 or 0),
+        overdue_30_plus_days_count=int(overdue_30_plus or 0),
     )
 
 

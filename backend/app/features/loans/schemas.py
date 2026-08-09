@@ -159,6 +159,9 @@ class BorrowerLoanResponse(LoanSchema):
     first_due_date: date
     final_due_date: date
     next_interest_due_date: date | None = None
+    next_payment_amount: Decimal | None = None
+    next_interest_amount: Decimal | None = None
+    next_principal_amount: Decimal | None = None
     status: str
     disbursed_at: datetime | None = None
     cancelled_at: datetime | None = None

@@ -44,7 +44,7 @@ class _OwnerAccountingScreenState extends ConsumerState<OwnerAccountingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('General Ledger & Accounting'),
+        title: const Text('General Ledger'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -177,7 +177,10 @@ class _JournalsTab extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -199,7 +202,6 @@ class _JournalsTab extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
                           if (tx.isBalanced)
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -225,11 +227,8 @@ class _JournalsTab extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                          const Spacer(),
-                          Text(
-                            tx.effectiveDate,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                          Text(tx.effectiveDate,
+                              style: Theme.of(context).textTheme.bodySmall),
                         ],
                       ),
                       const SizedBox(height: 8),

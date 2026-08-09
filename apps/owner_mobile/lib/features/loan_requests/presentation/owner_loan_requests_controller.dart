@@ -62,8 +62,11 @@ class OwnerLoanRequestsController
           ? (e.response?.data['detail']?.toString() ?? e.message)
           : e.message;
       state = state.copyWith(isLoading: false, errorMessage: msg);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Unable to load loan requests. Please try again.',
+      );
     }
   }
 

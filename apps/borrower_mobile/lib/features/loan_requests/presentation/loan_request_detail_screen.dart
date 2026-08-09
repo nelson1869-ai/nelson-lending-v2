@@ -9,6 +9,26 @@ class LoanRequestDetailScreen extends ConsumerWidget {
 
   const LoanRequestDetailScreen({super.key, required this.request});
 
+  String _formatTimestamp(String value) {
+    final date = DateTime.tryParse(value)?.toLocal();
+    if (date == null) return value;
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _statusExplanation(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'Approved by the Owner. Loan creation and disbursement may still be pending.';
+      case 'rejected':
+        return 'This request was rejected by the Owner.';
+      case 'cancelled':
+        return 'This request was cancelled.';
+      default:
+        return 'This request is waiting for Owner review.';
+    }
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'approved':
@@ -49,6 +69,10 @@ class LoanRequestDetailScreen extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    Text(_statusExplanation(request.status),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey)),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -90,11 +114,49 @@ class LoanRequestDetailScreen extends ConsumerWidget {
                         'Term Months', '${request.requestedTermMonths} months'),
                     _buildRow('Frequency', request.requestedPaymentFrequency),
                     _buildRow('First Due Date', request.requestedFirstDueDate),
-                    _buildRow('Submitted At', request.submittedAt),
+                    _buildRow('Submitted At', _formatTimestamp(request.submittedAt)),
                   ],
                 ),
               ),
             ),
+            if (request.quotePreview != null) ...[
+              const SizedBox(height: 20),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Estimated Repayment',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const Divider(height: 20),
+                      _buildRow(
+                        'Number of Payments',
+                        '${request.quotePreview!.numberOfPayments} payments',
+                      ),
+                      _buildRow(
+                        'Periodic Payment',
+                        '₱${request.quotePreview!.periodicPayment.toStringAsFixed(2)}',
+                      ),
+                      _buildRow(
+                        'Total Interest',
+                        '₱${request.quotePreview!.totalInterest.toStringAsFixed(2)}',
+                      ),
+                      _buildRow(
+                        'Total Repayable',
+                        '₱${request.quotePreview!.totalAmount.toStringAsFixed(2)}',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             if (request.status == 'pending') ...[
               const SizedBox(height: 24),
               OutlinedButton.icon(
@@ -152,7 +214,11 @@ class LoanRequestDetailScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(value, textAlign: TextAlign.end,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );

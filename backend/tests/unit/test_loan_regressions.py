@@ -75,7 +75,7 @@ def test_regression_period_rate_derivation() -> None:
     """Verify period rate derivation for monthly and twice-monthly frequencies."""
     monthly_r = Decimal("0.12")
     assert calculate_period_rate(monthly_r, "monthly") == Decimal("0.12")
-    assert calculate_period_rate(monthly_r, "twice_monthly") == Decimal("0.06")
+    assert calculate_period_rate(monthly_r, "twice_monthly") == Decimal("0.12")
 
 
 def test_regression_invalid_input_validations() -> None:

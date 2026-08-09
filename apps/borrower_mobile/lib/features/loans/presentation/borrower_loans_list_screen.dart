@@ -72,8 +72,21 @@ class BorrowerLoansListScreen extends ConsumerWidget {
                       'Principal: ₱${loan.originalPrincipal}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(
-                      'Outstanding: ₱${loan.outstandingPrincipal} • ${loan.termMonths} mos',
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Outstanding: ₱${loan.outstandingPrincipal} • '
+                          '${loan.termMonths} mos • '
+                          '${loan.numberOfPayments} total payments',
+                        ),
+                        if (loan.nextPaymentAmount != null)
+                          Text(
+                            'Next payment: ₱${loan.nextPaymentAmount} '
+                            '(Interest: ₱${loan.nextInterestAmount ?? '0.00'})',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                      ],
                     ),
                     trailing: Chip(
                       label: Text(

@@ -52,6 +52,30 @@ CurrentOwner = Annotated[OwnerUser, Depends(get_current_owner)]
 DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
 
 
+def _borrower_request_response(req) -> BorrowerLoanRequestResponse:
+    quote = calculate_quote(
+        principal=req.requested_principal,
+        monthly_rate=req.requested_monthly_rate,
+        term_months=req.requested_term_months,
+        payment_frequency=req.requested_payment_frequency,
+        first_due_date=req.requested_first_due_date,
+    )
+    return BorrowerLoanRequestResponse(
+        id=req.id,
+        borrower_id=req.borrower_id,
+        requested_principal=req.requested_principal,
+        requested_monthly_rate=req.requested_monthly_rate,
+        requested_term_months=req.requested_term_months,
+        requested_payment_frequency=req.requested_payment_frequency,
+        requested_first_due_date=req.requested_first_due_date,
+        status=req.status,
+        submitted_at=req.submitted_at,
+        created_at=req.created_at,
+        updated_at=req.updated_at,
+        quote_preview=LoanQuoteResponse.model_validate(quote),
+    )
+
+
 @borrower_loan_requests_router.post(
     "/quote",
     response_model=LoanQuoteResponse,
@@ -102,7 +126,7 @@ async def borrower_submit_loan_request(
         )
         await db_session.commit()
         await db_session.refresh(req)
-        return BorrowerLoanRequestResponse.model_validate(req)
+        return _borrower_request_response(req)
     except BusinessEstimateRateUnconfiguredError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -126,7 +150,7 @@ async def borrower_list_loan_requests(
 ) -> list[BorrowerLoanRequestResponse]:
     """List all loan requests created by the authenticated borrower."""
     requests = await list_borrower_loan_requests(db_session, auth.borrower.id)
-    return [BorrowerLoanRequestResponse.model_validate(r) for r in requests]
+    return [_borrower_request_response(r) for r in requests]
 
 
 @borrower_loan_requests_router.get(
@@ -146,7 +170,7 @@ async def borrower_get_loan_request_detail(
             borrower_id=auth.borrower.id,
             request_id=request_id,
         )
-        return BorrowerLoanRequestResponse.model_validate(req)
+        return _borrower_request_response(req)
     except LoanRequestNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -173,7 +197,7 @@ async def borrower_cancel_loan_request(
         )
         await db_session.commit()
         await db_session.refresh(req)
-        return BorrowerLoanRequestResponse.model_validate(req)
+        return _borrower_request_response(req)
     except LoanRequestNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -211,6 +235,7 @@ async def owner_list_loan_requests(
             OwnerLoanRequestDetailResponse(
                 id=req.id,
                 borrower_id=req.borrower_id,
+                loan_id=req.loan.id if req.loan is not None else None,
                 requested_principal=req.requested_principal,
                 requested_monthly_rate=req.requested_monthly_rate,
                 requested_term_months=req.requested_term_months,
@@ -256,6 +281,7 @@ async def owner_get_loan_request_detail(
         return OwnerLoanRequestDetailResponse(
             id=req.id,
             borrower_id=req.borrower_id,
+            loan_id=req.loan.id if req.loan is not None else None,
             requested_principal=req.requested_principal,
             requested_monthly_rate=req.requested_monthly_rate,
             requested_term_months=req.requested_term_months,

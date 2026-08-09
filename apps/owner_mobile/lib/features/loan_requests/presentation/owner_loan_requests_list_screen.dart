@@ -188,6 +188,20 @@ class _OwnerLoanRequestsListScreenState
                                           style: const TextStyle(
                                               fontWeight: FontWeight.w600),
                                         ),
+                                        if (req.status == 'approved') ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            req.loanId == null
+                                                ? 'Loan contract: creation required'
+                                                : 'Loan contract: created',
+                                            style: TextStyle(
+                                              color: req.loanId == null
+                                                  ? Colors.orange.shade800
+                                                  : Colors.green.shade700,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                         const SizedBox(height: 4),
                                         Text(
                                           'Submitted: ${req.submittedAt}',

@@ -85,7 +85,7 @@ def test_twice_monthly_loan() -> None:
     )
 
     assert quote.number_of_payments == 4
-    assert quote.period_rate == Decimal("0.0300000000")
+    assert quote.period_rate == Decimal("0.0600000000")
     assert len(quote.schedule) == 4
 
     # Due dates check: 15th and last day of Jan, Feb

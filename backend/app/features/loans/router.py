@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.features.borrowers.auth_dependencies import get_current_borrower_account
 from app.features.borrowers.auth_service import BorrowerAuthContext
 from app.features.loans.calculator import calculate_quote
+from app.features.loans.accrual_service import accrue_due_interest
 from app.features.loans.schemas import (
     BorrowerLoanDetailResponse,
     BorrowerLoanResponse,
@@ -41,6 +42,21 @@ borrower_loans_router = APIRouter(prefix="/borrower/loans", tags=["borrower-loan
 
 # Backward compatibility alias
 router = owner_loans_router
+
+
+@owner_loans_router.post(
+    "/loans/accrue-interest",
+    status_code=status.HTTP_200_OK,
+    summary="Accrue due contractual interest",
+)
+async def accrue_owner_loan_interest(
+    _owner: Annotated[OwnerUser, Depends(get_current_owner)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, int]:
+    """Scheduler-safe trigger; callers should run this once per day."""
+    changed = await accrue_due_interest(db)
+    await db.commit()
+    return {"loans_updated": changed}
 
 
 @owner_loans_router.post(
@@ -88,6 +104,11 @@ async def create_loan_from_approved_request(
             request_id=request_id,
             owner_id=owner.id,
         )
+        # Loan creation is a durable financial mutation.  The database
+        # dependency deliberately does not auto-commit, so commit explicitly
+        # before returning a successful response.
+        await db.commit()
+        await db.refresh(loan)
         return OwnerLoanResponse.model_validate(loan)
     except LoanRequestNotFoundError as e:
         raise HTTPException(
@@ -124,6 +145,8 @@ async def disburse_loan_endpoint(
             loan_id=loan_id,
             owner_id=owner.id,
         )
+        await db.commit()
+        await db.refresh(loan)
         return OwnerLoanResponse.model_validate(loan)
     except LoanNotFoundError as e:
         raise HTTPException(
@@ -155,6 +178,8 @@ async def cancel_loan_endpoint(
             loan_id=loan_id,
             owner_id=owner.id,
         )
+        await db.commit()
+        await db.refresh(loan)
         return OwnerLoanResponse.model_validate(loan)
     except LoanNotFoundError as e:
         raise HTTPException(
@@ -249,7 +274,36 @@ async def list_borrower_loans(
         limit=limit,
         offset=offset,
     )
-    return [BorrowerLoanResponse.model_validate(loan_obj) for loan_obj in loans]
+    responses: list[BorrowerLoanResponse] = []
+    for loan_obj in loans:
+        response = BorrowerLoanResponse.model_validate(loan_obj)
+        quote = calculate_quote(
+            principal=loan_obj.original_principal,
+            monthly_rate=loan_obj.monthly_rate,
+            term_months=loan_obj.term_months,
+            payment_frequency=loan_obj.payment_frequency,
+            first_due_date=loan_obj.first_due_date,
+        )
+        next_due = loan_obj.next_interest_due_date
+        installment = next(
+            (item for item in quote.schedule if item.due_date == next_due), None
+        )
+        # The contractual quote is authoritative.  Fall back to the first
+        # installment for legacy rows whose due-date anchor predates the
+        # current quote projection.
+        response.next_payment_amount = (
+            installment.scheduled_payment
+            if installment is not None
+            else (quote.schedule[0].scheduled_payment if quote.schedule else None)
+        )
+        if installment is not None:
+            response.next_interest_amount = installment.interest_due
+            response.next_principal_amount = installment.scheduled_principal
+        elif quote.schedule:
+            response.next_interest_amount = quote.schedule[0].interest_due
+            response.next_principal_amount = quote.schedule[0].scheduled_principal
+        responses.append(response)
+    return responses
 
 
 @borrower_loans_router.get(

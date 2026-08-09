@@ -17,13 +17,22 @@ class ScheduleItemModel {
 
   factory ScheduleItemModel.fromJson(Map<String, dynamic> json) {
     return ScheduleItemModel(
-      paymentNumber: (json['paymentNumber'] as num).toInt(),
+      paymentNumber:
+          (json['paymentNumber'] ?? json['installmentNumber'] as num).toInt(),
       dueDate: json['dueDate'] as String,
-      paymentAmount: (num.parse(json['paymentAmount'].toString())).toDouble(),
-      interestPaid: (num.parse(json['interestPaid'].toString())).toDouble(),
-      principalPaid: (num.parse(json['principalPaid'].toString())).toDouble(),
+      paymentAmount: num.parse(
+              (json['paymentAmount'] ?? json['scheduledPayment']).toString())
+          .toDouble(),
+      interestPaid: num.parse(
+              (json['interestPaid'] ?? json['interestDue']).toString())
+          .toDouble(),
+      principalPaid: num.parse(
+              (json['principalPaid'] ?? json['scheduledPrincipal']).toString())
+          .toDouble(),
       remainingPrincipal:
-          (num.parse(json['remainingPrincipal'].toString())).toDouble(),
+          num.parse((json['remainingPrincipal'] ?? json['closingPrincipal'])
+                  .toString())
+              .toDouble(),
     );
   }
 }
@@ -62,10 +71,16 @@ class LoanQuoteModel {
       paymentFrequency: json['paymentFrequency'] as String,
       firstDueDate: json['firstDueDate'] as String,
       numberOfPayments: (json['numberOfPayments'] as num).toInt(),
-      periodicPayment:
-          (num.parse(json['periodicPayment'].toString())).toDouble(),
-      totalInterest: (num.parse(json['totalInterest'].toString())).toDouble(),
-      totalAmount: (num.parse(json['totalAmount'].toString())).toDouble(),
+      periodicPayment: num.parse(
+              (json['periodicPayment'] ?? json['scheduledPayment']).toString())
+          .toDouble(),
+      totalInterest: num.parse(
+              (json['totalInterest'] ?? json['totalScheduledInterest'])
+                  .toString())
+          .toDouble(),
+      totalAmount: num.parse(
+              (json['totalAmount'] ?? json['totalScheduledRepayment']).toString())
+          .toDouble(),
       schedule: rawSchedule
           .map((e) => ScheduleItemModel.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -85,6 +100,7 @@ class LoanRequestModel {
   final String submittedAt;
   final String createdAt;
   final String updatedAt;
+  final LoanQuoteModel? quotePreview;
 
   const LoanRequestModel({
     required this.id,
@@ -98,6 +114,7 @@ class LoanRequestModel {
     required this.submittedAt,
     required this.createdAt,
     required this.updatedAt,
+    this.quotePreview,
   });
 
   factory LoanRequestModel.fromJson(Map<String, dynamic> json) {
@@ -115,6 +132,10 @@ class LoanRequestModel {
       submittedAt: json['submittedAt'] as String,
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
+      quotePreview: json['quotePreview'] == null
+          ? null
+          : LoanQuoteModel.fromJson(
+              json['quotePreview'] as Map<String, dynamic>),
     );
   }
 }

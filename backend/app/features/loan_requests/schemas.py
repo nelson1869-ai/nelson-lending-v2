@@ -70,7 +70,7 @@ LoanRequestCreate = BorrowerLoanRequestCreate
 
 
 class BorrowerLoanRequestResponse(LoanRequestBaseSchema):
-    """Borrower-safe loan request data returned to borrower."""
+    """Borrower-safe loan request data and its authoritative quote preview."""
 
     id: UUID
     borrower_id: UUID
@@ -83,12 +83,14 @@ class BorrowerLoanRequestResponse(LoanRequestBaseSchema):
     submitted_at: datetime
     created_at: datetime
     updated_at: datetime
+    quote_preview: LoanQuoteResponse
 
 
 class OwnerLoanRequestResponse(LoanRequestBaseSchema):
     """Loan request data returned to owner, including internal review metadata."""
 
     id: UUID
+    loan_id: UUID | None = None
     borrower_id: UUID
     requested_principal: Decimal
     requested_monthly_rate: Decimal
@@ -107,6 +109,7 @@ class OwnerLoanRequestResponse(LoanRequestBaseSchema):
 class OwnerLoanRequestDetailResponse(OwnerLoanRequestResponse):
     """Detailed loan request payload for owner review including quote preview."""
 
+    loan_id: UUID | None = None
     borrower_first_name: str
     borrower_last_name: str
     borrower_national_id: str

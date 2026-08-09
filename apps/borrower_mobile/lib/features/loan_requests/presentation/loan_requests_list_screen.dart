@@ -37,6 +37,13 @@ class _LoanRequestsListScreenState
     }
   }
 
+  String _formatTimestamp(String value) {
+    final date = DateTime.tryParse(value)?.toLocal();
+    if (date == null) return value;
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(loanRequestsControllerProvider);
@@ -165,9 +172,15 @@ class _LoanRequestsListScreenState
                                   Text(
                                     '${req.requestedTermMonths} months @ ${(req.requestedMonthlyRate * 100).toStringAsFixed(1)}%/mo (${req.requestedPaymentFrequency})',
                                   ),
+                                  if (req.quotePreview != null)
+                                    Text(
+                                      '${req.quotePreview!.numberOfPayments} total payments',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600),
+                                    ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Submitted: ${req.submittedAt}',
+                                    'Submitted: ${_formatTimestamp(req.submittedAt)}',
                                     style: const TextStyle(
                                         fontSize: 12, color: Colors.grey),
                                   ),

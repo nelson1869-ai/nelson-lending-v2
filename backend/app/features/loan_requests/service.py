@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.features.borrowers.models import Borrower
 from app.features.business_settings.models import BusinessSetting
@@ -179,6 +180,7 @@ async def list_owner_loan_requests(
     """Fetch loan requests with borrower information for owner review."""
     stmt = (
         select(LoanRequest, Borrower)
+        .options(joinedload(LoanRequest.loan))
         .join(Borrower, LoanRequest.borrower_id == Borrower.id)
         .order_by(LoanRequest.created_at.desc())
     )
@@ -196,6 +198,7 @@ async def get_owner_loan_request_detail(
     """Fetch specific loan request with borrower information for owner review."""
     stmt = (
         select(LoanRequest, Borrower)
+        .options(joinedload(LoanRequest.loan))
         .join(Borrower, LoanRequest.borrower_id == Borrower.id)
         .where(LoanRequest.id == request_id)
     )

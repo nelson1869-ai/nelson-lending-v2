@@ -8,6 +8,15 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
 
   const OwnerLoanDetailScreen({super.key, required this.loanId});
 
+  String _formatTimestamp(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return value;
+    final local = parsed.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${local.year}-${two(local.month)}-${two(local.day)} '
+        '${two(local.hour)}:${two(local.minute)}';
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'active':
@@ -294,6 +303,7 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 8),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -378,7 +388,7 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
                       if (loan.disbursedAt != null) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'Disbursed: ${loan.disbursedAt}',
+                          'Disbursed: ${_formatTimestamp(loan.disbursedAt!)}',
                           style:
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
@@ -386,7 +396,7 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
                       if (loan.cancelledAt != null) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'Cancelled: ${loan.cancelledAt}',
+                          'Cancelled: ${_formatTimestamp(loan.cancelledAt!)}',
                           style:
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
@@ -394,7 +404,7 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
                       if (loan.paidAt != null) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'Paid at: ${loan.paidAt}',
+                          'Paid at: ${_formatTimestamp(loan.paidAt!)}',
                           style:
                               const TextStyle(fontSize: 12, color: Colors.teal),
                         ),
@@ -465,10 +475,18 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
               paymentsAsync.when(
                 data: (payments) {
                   if (payments.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text('No payments posted yet.',
-                          style: TextStyle(color: Colors.grey)),
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.receipt_long, color: Colors.grey),
+                            SizedBox(width: 12),
+                            Text('No payments posted yet.',
+                                style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                      ),
                     );
                   }
                   return SingleChildScrollView(
@@ -506,24 +524,27 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
+              const Text('Swipe horizontally to view all columns.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 4),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: const [
                     DataColumn(label: Text('#')),
                     DataColumn(label: Text('Due Date')),
+                    DataColumn(label: Text('Payment')),
                     DataColumn(label: Text('Principal')),
                     DataColumn(label: Text('Interest')),
-                    DataColumn(label: Text('Payment')),
                     DataColumn(label: Text('Balance')),
                   ],
                   rows: loan.quotePreview.schedule.map((item) {
                     return DataRow(cells: [
                       DataCell(Text(item.installmentNumber.toString())),
                       DataCell(Text(item.dueDate)),
+                      DataCell(Text('₱${item.scheduledPayment}')),
                       DataCell(Text('₱${item.scheduledPrincipal}')),
                       DataCell(Text('₱${item.interestDue}')),
-                      DataCell(Text('₱${item.scheduledPayment}')),
                       DataCell(Text('₱${item.closingPrincipal}')),
                     ]);
                   }).toList(),

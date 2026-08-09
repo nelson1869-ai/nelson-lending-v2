@@ -14,8 +14,8 @@ class LoanRequestFormScreen extends ConsumerStatefulWidget {
 
 class _LoanRequestFormScreenState extends ConsumerState<LoanRequestFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _principalController = TextEditingController(text: '5000');
-  final _termController = TextEditingController(text: '3');
+  final _principalController = TextEditingController(text: '1000');
+  final _termController = TextEditingController(text: '1');
 
   String _paymentFrequency = 'monthly';
   DateTime _firstDueDate = DateTime.now().add(const Duration(days: 30));

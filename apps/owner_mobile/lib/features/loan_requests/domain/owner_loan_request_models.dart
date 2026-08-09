@@ -17,13 +17,15 @@ class OwnerScheduleItemModel {
 
   factory OwnerScheduleItemModel.fromJson(Map<String, dynamic> json) {
     return OwnerScheduleItemModel(
-      paymentNumber: (json['paymentNumber'] as num).toInt(),
+      paymentNumber: (json['installmentNumber'] as num).toInt(),
       dueDate: json['dueDate'] as String,
-      paymentAmount: (num.parse(json['paymentAmount'].toString())).toDouble(),
-      interestPaid: (num.parse(json['interestPaid'].toString())).toDouble(),
-      principalPaid: (num.parse(json['principalPaid'].toString())).toDouble(),
+      paymentAmount:
+          (num.parse(json['scheduledPayment'].toString())).toDouble(),
+      interestPaid: (num.parse(json['interestDue'].toString())).toDouble(),
+      principalPaid:
+          (num.parse(json['scheduledPrincipal'].toString())).toDouble(),
       remainingPrincipal:
-          (num.parse(json['remainingPrincipal'].toString())).toDouble(),
+          (num.parse(json['closingPrincipal'].toString())).toDouble(),
     );
   }
 }
@@ -63,9 +65,11 @@ class OwnerLoanQuotePreviewModel {
       firstDueDate: json['firstDueDate'] as String,
       numberOfPayments: (json['numberOfPayments'] as num).toInt(),
       periodicPayment:
-          (num.parse(json['periodicPayment'].toString())).toDouble(),
-      totalInterest: (num.parse(json['totalInterest'].toString())).toDouble(),
-      totalAmount: (num.parse(json['totalAmount'].toString())).toDouble(),
+          (num.parse(json['scheduledPayment'].toString())).toDouble(),
+      totalInterest:
+          (num.parse(json['totalScheduledInterest'].toString())).toDouble(),
+      totalAmount:
+          (num.parse(json['totalScheduledRepayment'].toString())).toDouble(),
       schedule: rawSchedule
           .map(
               (e) => OwnerScheduleItemModel.fromJson(e as Map<String, dynamic>))
@@ -83,6 +87,7 @@ class OwnerLoanRequestDetailModel {
   final String requestedPaymentFrequency;
   final String requestedFirstDueDate;
   final String status;
+  final String? loanId;
   final String submittedAt;
   final String? reviewedAt;
   final String? reviewedByOwnerId;
@@ -106,6 +111,7 @@ class OwnerLoanRequestDetailModel {
     required this.requestedPaymentFrequency,
     required this.requestedFirstDueDate,
     required this.status,
+    this.loanId,
     required this.submittedAt,
     this.reviewedAt,
     this.reviewedByOwnerId,
@@ -131,6 +137,7 @@ class OwnerLoanRequestDetailModel {
       requestedPaymentFrequency: json['requestedPaymentFrequency'] as String,
       requestedFirstDueDate: json['requestedFirstDueDate'] as String,
       status: json['status'] as String,
+      loanId: json['loanId'] as String?,
       submittedAt: json['submittedAt'] as String,
       reviewedAt: json['reviewedAt'] as String?,
       reviewedByOwnerId: json['reviewedByOwnerId'] as String?,

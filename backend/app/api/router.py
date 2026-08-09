@@ -9,6 +9,7 @@ from app.features.accounting.router import (
 )
 from app.features.borrowers.auth_router import borrower_router as borrower_auth_router
 from app.features.borrowers.auth_router import owner_router as owner_activation_router
+from app.features.borrowers.owner_router import router as owner_borrowers_router
 from app.features.borrowers.registration_router import (
     owner_router as owner_borrower_registration_router,
 )
@@ -44,6 +45,7 @@ versioned_router.include_router(borrower_registration_router)
 versioned_router.include_router(owner_borrower_registration_router)
 versioned_router.include_router(owner_auth_router)
 versioned_router.include_router(owner_activation_router)
+versioned_router.include_router(owner_borrowers_router)
 versioned_router.include_router(borrower_auth_router)
 versioned_router.include_router(borrower_loan_requests_router)
 versioned_router.include_router(owner_loan_requests_router)

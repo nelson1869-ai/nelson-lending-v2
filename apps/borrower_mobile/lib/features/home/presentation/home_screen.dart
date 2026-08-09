@@ -7,6 +7,7 @@ import '../../auth/presentation/auth_controller.dart';
 import '../../loan_requests/presentation/loan_request_form_screen.dart';
 import '../../loan_requests/presentation/loan_requests_list_screen.dart';
 import '../../loans/presentation/borrower_loans_list_screen.dart';
+import '../../loans/presentation/borrower_loans_controller.dart';
 import '../../notifications/presentation/borrower_notifications_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -56,6 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final profile = authState.borrower;
+    final loansAsync = ref.watch(borrowerLoansListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -124,6 +126,111 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+              loansAsync.when(
+                loading: () => const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (loans) {
+                  final active = loans.where((loan) => loan.status == 'active').toList();
+                  if (active.isEmpty) return const SizedBox.shrink();
+                  active.sort((a, b) =>
+                      (a.nextInterestDueDate ?? a.firstDueDate)
+                          .compareTo(b.nextInterestDueDate ?? b.firstDueDate));
+                  final balance = active.fold<double>(
+                    0,
+                    (sum, loan) => sum + (double.tryParse(loan.outstandingPrincipal) ?? 0),
+                  );
+                  final totalNextPayment = active.fold<double>(
+                    0,
+                    (sum, loan) =>
+                        sum + (double.tryParse(loan.nextPaymentAmount ?? '') ?? 0),
+                  );
+                  final totalNextInterest = active.fold<double>(
+                    0,
+                    (sum, loan) =>
+                        sum + (double.tryParse(loan.nextInterestAmount ?? '') ?? 0),
+                  );
+                  final today = DateTime.now();
+                  final overdue = active.where((loan) {
+                    final due = DateTime.tryParse(
+                        loan.nextInterestDueDate ?? loan.firstDueDate);
+                    return due != null && due.isBefore(DateTime(today.year, today.month, today.day));
+                  }).length;
+                  return Card(
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Loan Summary', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const Divider(height: 24),
+                          _buildInfoRow('Outstanding balance', '₱${balance.toStringAsFixed(2)}'),
+                          const SizedBox(height: 10),
+                          _buildInfoRow('Active loans', '${active.length}'),
+                          const SizedBox(height: 16),
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Active Loan Payments',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoRow(
+                            'Total next payment amount',
+                            '₱${totalNextPayment.toStringAsFixed(2)}',
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 6),
+                          _buildInfoRow(
+                            'Total interest portion',
+                            '₱${totalNextInterest.toStringAsFixed(2)}',
+                          ),
+                          for (var i = 0; i < active.length; i++) ...[
+                            if (i > 0) ...[
+                              const SizedBox(height: 12),
+                              const Divider(height: 1),
+                            ],
+                            const SizedBox(height: 10),
+                            Text(
+                              'Active Loan ${i + 1}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const Divider(height: 12),
+                            _buildInfoRow(
+                                'Next payment',
+                                active[i].nextInterestDueDate ??
+                                    active[i].firstDueDate),
+                            const SizedBox(height: 6),
+                            _buildInfoRow(
+                              'Payment amount',
+                              '₱${active[i].nextPaymentAmount ?? 'N/A'}',
+                              Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(height: 8),
+                            const Divider(height: 1),
+                            const SizedBox(height: 8),
+                            _buildInfoRow(
+                              'Interest due',
+                              '₱${active[i].nextInterestAmount ?? 'N/A'}',
+                            ),
+                          ],
+                          if (overdue > 0) ...[
+                            const SizedBox(height: 12),
+                            _buildInfoRow('Overdue loans', '$overdue', Colors.red),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),

@@ -205,14 +205,14 @@ def advance_due_date(
 
 
 def calculate_period_rate(monthly_rate: Decimal, payment_frequency: str) -> Decimal:
-    """Derive periodic interest rate from canonical monthly rate."""
+    """Return the configured contractual rate for each scheduled period."""
     if monthly_rate < Decimal("0"):
         raise ValueError("monthly_rate cannot be negative")
 
     if payment_frequency == "monthly":
         return monthly_rate
     elif payment_frequency == "twice_monthly":
-        return monthly_rate / Decimal("2")
+        return monthly_rate
     else:
         raise ValueError(f"Unsupported payment frequency '{payment_frequency}'")
 

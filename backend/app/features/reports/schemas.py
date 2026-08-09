@@ -18,10 +18,22 @@ class PortfolioSnapshot(BaseModel):
 
     status_counts: list[StatusCount]
     total_original_principal: Decimal
+    total_scheduled_interest: Decimal
+    total_scheduled_repayment: Decimal
+    next_interest_due: Decimal
     outstanding_principal: Decimal
     accrued_interest: Decimal
     active_loan_count: int
     paid_loan_count: int
+    borrower_count: int = 0
+    due_today_count: int = 0
+    overdue_loan_count: int = 0
+    overdue_outstanding_principal: Decimal = Decimal("0.00")
+    due_next_7_days_count: int = 0
+    due_next_7_days_outstanding_principal: Decimal = Decimal("0.00")
+    overdue_1_7_days_count: int = 0
+    overdue_8_30_days_count: int = 0
+    overdue_30_plus_days_count: int = 0
 
 
 class CollectionsSummary(BaseModel):
