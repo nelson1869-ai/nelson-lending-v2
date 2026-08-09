@@ -77,7 +77,9 @@ void main() {
 
   Widget app() => ProviderScope(
         overrides: [ownerReportsApiClientProvider.overrideWithValue(client)],
-        child: const MaterialApp(home: OwnerDashboardScreen()),
+        child: MaterialApp(
+          home: OwnerDashboardScreen(initialDate: DateTime(2026, 8, 15)),
+        ),
       );
 
   testWidgets('shows loading then canonical dashboard summaries',
@@ -138,5 +140,38 @@ void main() {
 
     expect(find.text('No report activity for the selected period.'),
         findsOneWidget);
+  });
+
+  testWidgets('invalid date range hides stale metrics and blocks refresh',
+      (tester) async {
+    var calls = 0;
+    when(() => client.fetchDashboard(
+          fromDate: any(named: 'fromDate'),
+          toDate: any(named: 'toDate'),
+        )).thenAnswer((_) async {
+      calls += 1;
+      return _dashboard();
+    });
+
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    expect(find.text('Portfolio'), findsOneWidget);
+
+    await tester.tap(find.text('From 2026-08-01'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Next month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel(RegExp('September 1, 2026')));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.text('Start date must be on or before end date.'), findsOneWidget);
+    expect(find.text('Portfolio'), findsNothing);
+    expect(calls, 1);
+
+    await tester.tap(find.byTooltip('Refresh dashboard'));
+    await tester.pumpAndSettle();
+    expect(calls, 1);
   });
 }

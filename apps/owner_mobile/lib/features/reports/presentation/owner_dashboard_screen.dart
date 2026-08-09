@@ -5,7 +5,9 @@ import '../data/owner_reports_api_client.dart';
 import '../domain/dashboard_models.dart';
 
 class OwnerDashboardScreen extends ConsumerStatefulWidget {
-  const OwnerDashboardScreen({super.key});
+  final DateTime? initialDate;
+
+  const OwnerDashboardScreen({super.key, this.initialDate});
 
   @override
   ConsumerState<OwnerDashboardScreen> createState() =>
@@ -20,7 +22,7 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
+    final now = widget.initialDate ?? DateTime.now();
     _fromDate = DateTime(now.year, now.month, 1);
     _toDate = DateTime(now.year, now.month + 1, 0);
     _dashboard = _load();
@@ -34,6 +36,7 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
   }
 
   void _refresh() {
+    if (_fromDate.isAfter(_toDate)) return;
     final nextDashboard = _load();
     setState(() {
       _dashboard = nextDashboard;
@@ -70,7 +73,7 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
         actions: [
           IconButton(
             tooltip: 'Refresh dashboard',
-            onPressed: _refresh,
+            onPressed: _fromDate.isAfter(_toDate) ? null : _refresh,
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -134,50 +137,61 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
               'Start date must be on or before end date.',
               style: TextStyle(color: Colors.red),
             ),
-          if (dashboard.isEmpty)
+          if (invalidRange)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Choose a valid period to load dashboard metrics.'),
+              ),
+            ),
+          if (!invalidRange && dashboard.isEmpty)
             const Card(
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: Text('No report activity for the selected period.'),
               ),
             ),
-          _section(
-            'Portfolio',
-            [
-              _money('Original principal (active + paid)',
-                  dashboard.portfolio.totalOriginalPrincipal),
-              _money('Active outstanding principal',
-                  dashboard.portfolio.outstandingPrincipal),
-              _money('Active accrued interest',
-                  dashboard.portfolio.accruedInterest),
-              ...dashboard.portfolio.statusCounts
-                  .map((item) => _count(item.status, item.count)),
-            ],
-          ),
-          _section(
-            'Collections (${dashboard.collections.fromDate} to ${dashboard.collections.toDate})',
-            [
-              _money(
-                  'Total payments', dashboard.collections.totalPaymentAmount),
-              _money('Principal', dashboard.collections.principalAllocation),
-              _money('Interest', dashboard.collections.interestAllocation),
-              _money('Unapplied credit',
-                  dashboard.collections.unappliedCreditAllocation),
-            ],
-          ),
-          _section(
-            'Accounting balances',
-            dashboard.accountingBalances
-                .map(
-                    (item) => _money('${item.code} ${item.name}', item.balance))
-                .toList(),
-          ),
-          _section(
-            'Loan requests',
-            dashboard.loanRequestStatusCounts
-                .map((item) => _count(item.status, item.count))
-                .toList(),
-          ),
+          if (!invalidRange)
+            _section(
+              'Portfolio',
+              [
+                _money('Original principal (active + paid)',
+                    dashboard.portfolio.totalOriginalPrincipal),
+                _money('Active outstanding principal',
+                    dashboard.portfolio.outstandingPrincipal),
+                _money('Active accrued interest',
+                    dashboard.portfolio.accruedInterest),
+                ...dashboard.portfolio.statusCounts
+                    .map((item) => _count(item.status, item.count)),
+              ],
+            ),
+          if (!invalidRange)
+            _section(
+              'Collections (${dashboard.collections.fromDate} to ${dashboard.collections.toDate})',
+              [
+                _money(
+                    'Total payments', dashboard.collections.totalPaymentAmount),
+                _money('Principal', dashboard.collections.principalAllocation),
+                _money('Interest', dashboard.collections.interestAllocation),
+                _money('Unapplied credit',
+                    dashboard.collections.unappliedCreditAllocation),
+              ],
+            ),
+          if (!invalidRange)
+            _section(
+              'Accounting balances',
+              dashboard.accountingBalances
+                  .map((item) =>
+                      _money('${item.code} ${item.name}', item.balance))
+                  .toList(),
+            ),
+          if (!invalidRange)
+            _section(
+              'Loan requests',
+              dashboard.loanRequestStatusCounts
+                  .map((item) => _count(item.status, item.count))
+                  .toList(),
+            ),
         ],
       ),
     );
