@@ -41,6 +41,10 @@ separate totals for `amount`, `principal_paid`, `interest_paid`, and `unapplied_
 allocation totals must reconcile with payment amount under canonical allocation rules. Accounting
 reversals are not recalculated at the Payment layer.
 
+The maximum database date (`9999-12-31`) is rejected as `to_date` because its required following
+day cannot be represented as the exclusive interval bound. Invalid ranges are rejected before any
+report queries run.
+
 ## 4. Accounting Balances
 
 Current balances come only from immutable `JournalEntry` rows grouped by canonical account code:
@@ -67,7 +71,9 @@ canonical status ordering and canonical system-account ordering for deterministi
 
 The Owner Flutter application displays summary cards and compact rows, accepts Philippine date
 ranges, and provides loading, success, empty, error, refresh, and retry states. It parses backend
-money as strings and never reproduces report formulas. M15 makes no Borrower application changes.
+money as strings and never reproduces report formulas. When the selected dates are reversed, it
+hides previously loaded metrics and disables refresh until the Owner restores a valid range. M15
+makes no Borrower application changes.
 
 ## 7. Performance and Safe Extension
 

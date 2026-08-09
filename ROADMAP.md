@@ -334,12 +334,14 @@ never force-pushed or merged without explicit review approval.
   - `ruff check`: 0 errors; `ruff format`: 125 files clean.
   - `mypy`: 0 issues across 74 application files.
   - Alembic remains at the single `0012_notifications_outbox` head with zero schema drift.
-  - Owner Mobile: 31 tests passed; analyze, format, and debug APK build passed.
+  - Owner Mobile: 32 tests passed; analyze, format, and debug APK build passed.
   - Borrower Mobile regression: 28 tests passed; analyze, format, and debug APK build passed.
 - **Educational Commits:**
   - `5399c45`: feat(reports): add canonical owner dashboard metrics
   - `0ce5db7`: feat(owner_mobile): add reports dashboard experience
   - `d7824e7`: docs(reports): define dashboard metric rules
+  - `72e39a7`: fix(reports): validate collection interval bounds
+  - `71e6bf5`: fix(owner_mobile): hide stale metrics for invalid ranges
 - **Merge Commit:** Pending
 - **Notes / Lessons Learned:** Reporting remains a read-only projection over authoritative Loan, Payment, LoanRequest, Account, and JournalEntry records. Portfolio money uses only active and paid loans while every canonical status remains visible. Collections use effective `payment_date` with inclusive Philippine calendar inputs implemented as a half-open database interval, and payment allocations reconcile without joins. Accounting balances use canonical account codes and normal-balance rules, so reversal journals flow through naturally and negative reconciliation signals remain visible. Overdue/arrears, Borrower reports, charts, exports, detailed rows, caching, and persistent aggregates remain explicitly deferred.
 
