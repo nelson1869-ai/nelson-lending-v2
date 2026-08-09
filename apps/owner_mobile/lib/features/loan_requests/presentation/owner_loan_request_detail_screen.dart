@@ -45,8 +45,8 @@ class _OwnerLoanRequestDetailScreenState
       builder: (ctx) {
         _noteController.clear();
         return AlertDialog(
-          title: Text(
-              isApprove ? 'Accept Loan Request' : 'Reject Loan Request'),
+          title:
+              Text(isApprove ? 'Accept Loan Request' : 'Reject Loan Request'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,9 +303,8 @@ class _OwnerLoanRequestDetailScreenState
                             );
                             Navigator.pop(context);
                           } else {
-                            final error = ref
-                                .read(ownerLoansControllerProvider)
-                                .error;
+                            final error =
+                                ref.read(ownerLoansControllerProvider).error;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(

@@ -53,9 +53,8 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
   Future<void> _accrueInterest() async {
     setState(() => _isAccruingInterest = true);
     try {
-      final updated = await ref
-          .read(ownerReportsApiClientProvider)
-          .accrueDueInterest();
+      final updated =
+          await ref.read(ownerReportsApiClientProvider).accrueDueInterest();
       if (!mounted) return;
       _refresh();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -216,8 +215,8 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
                 _money('Overdue outstanding principal',
                     dashboard.portfolio.overdueOutstandingPrincipal,
                     onTap: _openLoans),
-                _count('Due in next 7 days',
-                    dashboard.portfolio.dueNext7DaysCount,
+                _count(
+                    'Due in next 7 days', dashboard.portfolio.dueNext7DaysCount,
                     onTap: _openLoans),
                 _money('Due next 7 days outstanding principal',
                     dashboard.portfolio.dueNext7DaysOutstandingPrincipal,
@@ -231,9 +230,9 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
                 _count('Overdue 30+ days',
                     dashboard.portfolio.overdue30PlusDaysCount,
                     onTap: _openLoans),
-                ...dashboard.portfolio.statusCounts
-                    .map((item) => _count(item.status, item.count,
-                        onTap: () => _openLoans(status: item.status))),
+                ...dashboard.portfolio.statusCounts.map((item) => _count(
+                    item.status, item.count,
+                    onTap: () => _openLoans(status: item.status))),
               ],
             ),
           if (!invalidRange)
@@ -245,7 +244,8 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
                     onTap: _openAccounting),
                 _money('Principal', dashboard.collections.principalAllocation,
                     onTap: _openAccounting),
-                _money('Interest collected', dashboard.collections.interestAllocation,
+                _money('Interest collected',
+                    dashboard.collections.interestAllocation,
                     onTap: _openAccounting),
                 _money('Unapplied credit',
                     dashboard.collections.unappliedCreditAllocation,
@@ -256,9 +256,9 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
             _section(
               'Accounting balances',
               dashboard.accountingBalances
-                  .map((item) =>
-                      _money('${item.code} ${item.name}', item.balance,
-                          onTap: _openAccounting))
+                  .map((item) => _money(
+                      '${item.code} ${item.name}', item.balance,
+                      onTap: _openAccounting))
                   .toList(),
             ),
           if (!invalidRange)
@@ -305,7 +305,9 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
   }
 
   void _openRequests(String status) {
-    ref.read(ownerLoanRequestsControllerProvider.notifier).fetchRequests(status);
+    ref
+        .read(ownerLoanRequestsControllerProvider.notifier)
+        .fetchRequests(status);
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const OwnerLoanRequestsListScreen()),
     );
@@ -327,12 +329,12 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
         onTap: onTap,
       );
 
-  Widget _valueWithChevron(String value, VoidCallback? onTap, [Color? color]) => Row(
+  Widget _valueWithChevron(String value, VoidCallback? onTap, [Color? color]) =>
+      Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(value,
-              style: TextStyle(
-                  fontWeight: FontWeight.w600, color: color)),
+              style: TextStyle(fontWeight: FontWeight.w600, color: color)),
           if (onTap != null) ...[
             const SizedBox(width: 8),
             const Icon(Icons.chevron_right, size: 20),

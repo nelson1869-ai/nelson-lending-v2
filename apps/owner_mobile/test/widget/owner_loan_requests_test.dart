@@ -65,7 +65,7 @@ void main() {
       expect(find.text('Loan Request Review'), findsOneWidget);
       expect(find.text('Juan Dela Cruz'), findsOneWidget);
       expect(find.text('PH-ID-12345'), findsOneWidget);
-      expect(find.text('Approve'), findsOneWidget);
+      expect(find.text('Accept Loan Request'), findsOneWidget);
       expect(find.text('Reject'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

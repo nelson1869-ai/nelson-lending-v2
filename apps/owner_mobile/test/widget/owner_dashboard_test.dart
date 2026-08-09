@@ -19,6 +19,9 @@ OwnerDashboardModel _dashboard() => const OwnerDashboardModel(
         totalOriginalPrincipal: '1000.00',
         outstandingPrincipal: '600.00',
         accruedInterest: '25.50',
+        totalScheduledInterest: '120.00',
+        totalScheduledRepayment: '1120.00',
+        nextInterestDue: '10.00',
         activeLoanCount: 1,
         paidLoanCount: 0,
       ),
@@ -49,6 +52,9 @@ OwnerDashboardModel _emptyDashboard() => const OwnerDashboardModel(
         totalOriginalPrincipal: '0.00',
         outstandingPrincipal: '0.00',
         accruedInterest: '0.00',
+        totalScheduledInterest: '0.00',
+        totalScheduledRepayment: '0.00',
+        nextInterestDue: '0.00',
         activeLoanCount: 0,
         paidLoanCount: 0,
       ),
@@ -99,7 +105,22 @@ void main() {
     expect(find.text('Reports & Dashboard'), findsOneWidget);
     expect(find.text('Portfolio'), findsOneWidget);
     expect(find.text('₱600.00'), findsOneWidget);
-    expect(find.text('₱700.00'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Total payments'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    final totalPaymentsRow = find.ancestor(
+      of: find.text('Total payments'),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(
+        of: totalPaymentsRow,
+        matching: find.text('₱700.00'),
+      ),
+      findsOneWidget,
+    );
     await tester.scrollUntilVisible(
       find.text('Loan requests'),
       300,

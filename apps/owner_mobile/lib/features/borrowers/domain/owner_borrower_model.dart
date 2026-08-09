@@ -15,7 +15,8 @@ class OwnerBorrowerModel {
     required this.status,
   });
 
-  factory OwnerBorrowerModel.fromJson(Map<String, dynamic> json) => OwnerBorrowerModel(
+  factory OwnerBorrowerModel.fromJson(Map<String, dynamic> json) =>
+      OwnerBorrowerModel(
         id: json['id'] as String,
         firstName: json['firstName'] as String,
         lastName: json['lastName'] as String,

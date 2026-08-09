@@ -475,11 +475,11 @@ class OwnerLoanDetailScreen extends ConsumerWidget {
               paymentsAsync.when(
                 data: (payments) {
                   if (payments.isEmpty) {
-                    return Card(
+                    return const Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.receipt_long, color: Colors.grey),
                             SizedBox(width: 12),
                             Text('No payments posted yet.',
