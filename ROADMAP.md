@@ -322,15 +322,26 @@ never force-pushed or merged without explicit review approval.
 
 ### M15 — Reports & Dashboard
 
-- **Status:** Not Started
-- **Branch:** `feature/m15-reports-dashboard`
+- **Status:** Ready for Review
+- **Branch:** `feature/m15-reports-dashboard-metrics`
 - **Goal:** Provide trustworthy portfolio, collection, and balance views for the Owner.
 - **Topics to Learn:** Reporting queries; portfolio and collection metrics; balances; dashboard APIs; query performance.
-- **Deliverables:** Reporting services/endpoints; dashboard summaries; documented metric definitions; performance-aware indexes.
-- **Tests / Quality Gates:** Metric fixtures; reconciliation to authoritative records; access control; query-plan/performance review; Decimal serialization.
-- **Completion Commit:** Pending
+- **Deliverables:** Owner-only portfolio and loan-request snapshots; inclusive Philippine-date collections allocations; normal-balance accounting summaries; authenticated dashboard API; Owner Flutter loading, success, empty, error, retry, refresh, and date-filter experience; documented metric definitions. Existing status, payment-date, and journal-entry account indexes support the aggregate query paths, so no new migration or persistent aggregate was required.
+- **Tests / Quality Gates:**
+  - Focused M15 PostgreSQL integration tests: 4 passed.
+  - Backend `pytest`: 258 passed; integration suite: 164 passed with 94 deselected.
+  - Portfolio status and monetary inclusion/exclusion, inclusive payment-date boundaries, allocation reconciliation, accounting normal balances, empty data, Owner authentication, Borrower rejection, invalid ranges, and OpenAPI presence are covered.
+  - `ruff check`: 0 errors; `ruff format`: 125 files clean.
+  - `mypy`: 0 issues across 74 application files.
+  - Alembic remains at the single `0012_notifications_outbox` head with zero schema drift.
+  - Owner Mobile: 31 tests passed; analyze, format, and debug APK build passed.
+  - Borrower Mobile regression: 28 tests passed; analyze, format, and debug APK build passed.
+- **Educational Commits:**
+  - `5399c45`: feat(reports): add canonical owner dashboard metrics
+  - `0ce5db7`: feat(owner_mobile): add reports dashboard experience
+  - `d7824e7`: docs(reports): define dashboard metric rules
 - **Merge Commit:** Pending
-- **Notes / Lessons Learned:** Pending
+- **Notes / Lessons Learned:** Reporting remains a read-only projection over authoritative Loan, Payment, LoanRequest, Account, and JournalEntry records. Portfolio money uses only active and paid loans while every canonical status remains visible. Collections use effective `payment_date` with inclusive Philippine calendar inputs implemented as a half-open database interval, and payment allocations reconcile without joins. Accounting balances use canonical account codes and normal-balance rules, so reversal journals flow through naturally and negative reconciliation signals remain visible. Overdue/arrears, Borrower reports, charts, exports, detailed rows, caching, and persistent aggregates remain explicitly deferred.
 
 ## Phase F — Production Engineering
 
